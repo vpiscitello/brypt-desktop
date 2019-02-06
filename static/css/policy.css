@@ -1,0 +1,119 @@
+main {
+    width: 100vw;
+    padding: 0;
+    overflow: visible;
+}
+
+article {
+    position: relative;
+    width: 80vw;
+    margin: 0 auto;
+    padding: 30px 40px;
+
+}
+
+p {
+    margin-top: 24px;
+}
+
+h3 {
+    display: inline-block;
+    position: relative;
+}
+
+h3::after {
+    content: "";
+    position: absolute;
+    left: 20px;
+    bottom: -8px;
+    /* width: 240px; */
+    width: 110%;
+    height: 24px;
+    background: rgba(26, 204, 148, 0.2);
+    z-index: -999;
+}
+
+#privacy-policy, #terms-and-conditions {
+    margin-top: 10px;
+    padding: 30px 0;
+}
+
+#privacy-policy h3, #terms-and-conditions h3 {
+    margin-bottom: 15px;
+}
+
+#privacy-policy .policy, #terms-and-conditions .terms {
+    justify-content: space-around;
+    align-items: center;
+    overflow: auto;
+    box-shadow: 10px 10px 25px 10px #dadada;
+    transition: 0.4s ease-in-out all;
+    width: 85vw;
+    height: 50vh;
+    padding: 10px;
+    margin: auto;
+}
+
+#privacy-policy .policy:hover, #terms-and-conditions .terms:hover {
+    box-shadow: 10px 10px 20px 8px #d5d5d5;
+    transition: 0.4s ease-in-out all;
+}
+
+.policy p, .terms p {
+    margin: 0 0 15px 0;
+}
+
+.policy h4, .terms h4 {
+    font-size: 25px;
+    margin: 0 0 15px 0;
+}
+
+.policy ol, .terms ol {
+    margin: 0 0 15px 0;
+}
+
+#privacy-policy #accept-action, #terms-and-conditions #accept-action {
+	position: absolute;
+	bottom: 5px;
+	right: 30px;
+}
+
+#accept-action button {
+	display: block;
+	width: 180px;
+	height: 50px;
+	margin: 0 auto;
+	font-size: 0.9em;
+	font-weight: 700;
+	/* text-transform: uppercase; */
+	/*letter-spacing: 0.075em;*/
+	color: rgba(251, 251, 251, 0.65);
+	cursor: pointer;
+	-webkit-appearance: none;
+	background: rgba(236, 0, 140, 0.9);
+	background: -webkit-linear-gradient(to bottom left, rgba(252, 104, 104, 0.9), rgba(236, 0, 140, 0.9));
+	background: linear-gradient(to bottom left, rgba(252, 104, 104, 0.9), rgba(236, 0, 140, 0.9));
+	border: none;
+	box-shadow: 0px 0px 20px rgba(236, 0, 140, 0.4);
+	transition: 0.2s ease-in-out all;
+}
+
+#accept-action button:hover {
+	color: rgba(251, 251, 251, 1);
+	background: rgba(236, 0, 140, 1);
+	background: -webkit-linear-gradient(to bottom left, rgba(252, 104, 104, 1), rgba(236, 0, 140, 1));
+	background: linear-gradient(to bottom left, rgba(252, 104, 104, 1), rgba(236, 0, 140, 1));
+	box-shadow: 0px 0px 20px rgba(236, 0, 140, 0.6);
+}
+
+@keyframes shift-right {
+    0% {
+        left: 0px;
+    }
+    50% {
+        left: 6px;
+    }
+    100% {
+        left: 0px;
+    }
+}
