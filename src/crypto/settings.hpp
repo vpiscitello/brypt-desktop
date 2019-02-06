@@ -3,10 +3,6 @@
 
 #include <nan.h>
 #include <node.h>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <unordered_map>
 
 class Settings : public Nan::ObjectWrap {
     private:
@@ -16,7 +12,7 @@ class Settings : public Nan::ObjectWrap {
     public:
         Settings();
         ~Settings();
-        
+
         void Configure(const v8::FunctionCallbackInfo<v8::Value> &args);
 
 };
