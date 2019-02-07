@@ -1,4 +1,8 @@
 #include <node.h>
+#include <nan.h>
+#include <v8.h>
+
+#include <node_buffer.h>
 
 #include <cstdlib>
 #include <cstdio>
@@ -20,6 +24,7 @@ namespace cryptographic {
     #include <openssl/hmac.h>
     #include <openssl/des.h>
 
+
     // void run(const Settings *options) {
     //
     // }
@@ -36,11 +41,9 @@ namespace cryptographic {
         int ctxt_len = 0;
         int ptxt_len = 0;
 
-    	EVP_CIPHER_CTX *ctx;
-
         iv = (unsigned char *)"0123456789012345";
 
-    	ctx = EVP_CIPHER_CTX_new();
+    	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 
     	EVP_EncryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key, iv);
     	EVP_EncryptUpdate(ctx, ciphertext, &length, plaintext, ptxt_len);
