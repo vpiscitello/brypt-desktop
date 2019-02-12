@@ -2,9 +2,13 @@
 dist/electron/*
 dist/web/*
 build/*
+bin/
 !build/icons
 node_modules/
 npm-debug.log
 npm-debug.log.*
 thumbs.db
 !.gitkeep
+fontawesome.all.min.css
+webfonts
+*.node
