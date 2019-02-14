@@ -5,9 +5,7 @@ body {
 }
 
 main {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
     height: 100%;
     width: 100%;
     padding: 0;
@@ -32,8 +30,8 @@ main .wrapper {
     position: relative;
     height: 100%;
     width: 60vw;
-    padding: 115px 48px 0px 48px;
-    /* padding: 115px 48px 48px 48px; */
+    padding: 24px 24px 0px 24px;
+    -webkit-app-region: no-drag;
 }
 
 #network #user {
@@ -580,12 +578,128 @@ main .wrapper {
     position: relative;
     height: 100%;
     width: 40vw;
-    /* background: linear-gradient(to top, rgb(26, 204, 148) 0%, rgb(126, 238, 203) 100%); */
+    padding: 24px 24px 24px 24px;
+    color: #FBFBFB !important;
     background: linear-gradient(to top right, #2D383C 0%, #3c4a4f 100%);
-    /* box-shadow: -20px 0px 32px -5px rgba(26, 204, 148, 0.15); */
     box-shadow: -20px 0px 32px -5px rgba(45, 56, 60, 0.15);
-    z-index: -999;
+    z-index: 0;
+    -webkit-app-region: no-drag;
 }
+
+#data > .context {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+#data > .context .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+#data > .context .header h3 {
+    font-size: 1.4em;
+    border-bottom: none;
+}
+
+#data > .context .header i {
+    margin-right: 12px;
+    font-size: 1.4em;
+}
+
+#chart {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    margin-top: 24px;
+}
+
+#overview {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    margin-top: 32px;
+    padding: 24px;
+}
+
+
+#overview .highlights, #overview .secondary {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+
+#overview .badge {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    box-sizing: content-box;
+    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+#overview .badge .label {
+    font-size: 10px;
+}
+
+#overview .badge .data {
+
+}
+
+#overview .highlights > .badge {
+    height: 80px;
+    width: 120px;
+    padding: 12px;
+    border-radius: 12px;
+    background: linear-gradient(to top right, rgba(26, 204, 148, 0.8) 0%, rgba(126, 238, 203, 0.8) 100%);
+}
+
+#overview .highlights > .badge .label {
+    color: #FBFBFB;
+}
+
+#overview .highlights > .badge .data {
+    font-family: "Bebas Neue";
+    color: #FBFBFB;
+    font-size: 38px;
+    letter-spacing: 0.01em;
+}
+
+#overview .secondary {
+    margin-top: 24px;
+}
+
+#overview .secondary > .badge {
+    height: 32px;
+    width: 110px;
+    padding: 6px;
+    border-radius: 8px;
+    background: #3c4a4f;
+}
+
+#overview .secondary > .badge .label {
+
+}
+
+#overview .secondary > .badge .data {
+    font-size: 14px;
+    font-weight: 700;
+}
+
 
 #flg-msg {
     display: flex;

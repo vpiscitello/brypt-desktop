@@ -1,7 +1,14 @@
 <template>
     <div id="wrapper">
-        <HeaderPartial></HeaderPartial>
+        <!-- <HeaderPartial></HeaderPartial> -->
         <main>
+            <FlashMessage
+                v-bind:id="'flash-message'"
+                v-bind:ref="'flash'"
+                v-bind:message="flash.message"
+                v-bind:urgency="flash.priority" >
+            </FlashMessage>
+
             <article class="access">
                 <section class="login">
                     <div class="box sw mc sg">
@@ -9,13 +16,14 @@
                             <div class="header" @click="test()">
                                 <h2>Sign In</h2>
                                 <!-- <img class="icon" src="./assets/img/ufo-abduct-cow-simple-black.svg" alt=""> -->
+                                <img class="logo" src="~@/assets/etc/login-icon.svg" alt="">
                             </div>
                             <form action="" name="login">
                                 <fieldset class="username">
-                                    <input type="text" name="username" required="" placeholder="Username">
+                                    <input v-model="loginUsername" type="text" name="username" required="" placeholder="Username">
                                 </fieldset>
                                 <fieldset class="password">
-                                    <input type="password" name="password" required="" placeholder="Password">
+                                    <input v-model="loginPassword" type="password" name="password" required="" placeholder="Password">
                                 </fieldset>
                                 <fieldset class="submit">
                                     <button type="button" name="login" @click="login()">
@@ -37,39 +45,36 @@
                             <div class="header">
                                 <h2>Register</h2>
                             </div>
-                            <form action="javascript:;" onsubmit="register()" method="post" name="register">
+                            <form action="" name="register">
                                 <div class="name">
                                     <fieldset class="FirstName">
-                                        <input type="text" name="first_name" required="" placeholder="First Name">
+                                        <input v-model="registerFirstName" type="text" name="first_name" required="" placeholder="First Name">
                                     </fieldset>
                                     <fieldset class="LastName">
-                                        <input type="text" name="last_name" required="" placeholder="Last Name">
+                                        <input v-model="registerLastName" type="text" name="last_name" required="" placeholder="Last Name">
                                     </fieldset>
                                 </div>
                                 <fieldset class="UserName">
-                                    <input type="text" name="username" required="" placeholder="Username">
+                                    <input v-model="registerUsername" type="text" name="username" required="" placeholder="Username">
                                 </fieldset>
                                 <fieldset class="Email">
-                                    <input type="text" name="email" required="" placeholder="Email">
+                                    <input v-model="registerEmail" type="text" name="email" required="" placeholder="Email">
                                 </fieldset>
                                 <fieldset class="UserPassword">
-                                    <input type="password" name="password" required="" placeholder="Password">
+                                    <input v-model="registerPassword" type="password" name="password" required="" placeholder="Password">
                                 </fieldset>
                                 <fieldset class="Region">
-                                    <input type="text" name="Region" required="" placeholder="Region">
+                                    <input v-model="registerRegion" type="text" name="Region" required="" placeholder="Region">
                                 </fieldset>
-                                <fieldset class="Birthday">
-                                    <input type="date" name="Birthday" required="">
-                                </fieldset>
+                                <!-- <fieldset class="Birthday">
+                                    <input v-model="registerUsername" type="date" name="Birthday" required="">
+                                </fieldset> -->
                                 <fieldset class="submit">
-                                    <button id="register" type="submit" name="register">
+                                    <button type="button" name="register" @click="register()">
                                         <i class="fa fa-arrow-right" aria-hidden="true"></i>
                                     </button>
                                 </fieldset>
                             </form>
-                            <div class="footer">
-
-                            </div>
                         </div>
                     </div>
                 </section>
@@ -80,69 +85,253 @@
 
             </article>
 
+            <transition name="fade">
+                <section class="processing" v-if="ui.processing">
+                    <div class="box">
+                        <div class="wrapper">
+                            <div class="header">
+                                <h2>Processing</h2>
+                            </div>
+                            <div class="context">
+                                <Spinner v-if="ui.loading" v-bind:color="'#FBFBFB'"></Spinner>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </transition>
+
         </main>
     </div>
 </template>
 
 <script>
     import CryptoInterface from "../../crypto/crypto"
+    import MessageInterface from "../../message/message"
 
-    import HeaderPartial from './Partials/HeaderPartial'
+    import Spinner from './Partials/Spinner'
+    import FlashMessage from './Partials/FlashMessage'
+
+    const remote = require('electron').remote;
+    const https = require('https');
+    const session = require('electron').remote.session;
+    const setCookie = require('set-cookie-parser');
+
+    var ses = session.fromPartition('persist:name');
 
     export default {
         name: 'access-page',
-        components: { HeaderPartial },
+        components: { Spinner, FlashMessage },
         data: function() {
             return {
+                window: remote.getCurrentWindow(),
                 activeCard: "login",
-                inactiveCard: "register"
+                inactiveCard: "register",
+                loginUsername: "",
+                loginPassword: "",
+                registerFirstName: "",
+                registerLastName: "",
+                registerUsername: "",
+                registerEmail: "",
+                registerPassword: "",
+                registerRegion: "",
+                // registerBirthDate: "",
+                flash: {
+                    show: false,
+                    message: "",
+                    priority: 0
+                },
+                ui: {
+                    processing: false,
+                    loading: false // A boolean value tracking the updating state of the group
+                }
             };
+        },
+        created: function() {
+            this.$root.$on('flash-closed', () => {
+                this.toggleProcessing();
+            });
         },
         methods: {
             open (link) {
                 this.$electron.shell.openExternal(link)
             },
             test () {
-                CryptoInterface.encrypt("Pineapple", "01234567890123456789012345678901");
-                // CryptoInterface.decrypt();
+                MessageInterface.test();
+                // let cipher = CryptoInterface.encrypt("Pineapple", "01234567890123456789012345678901");
+                // let plain = CryptoInterface.decrypt(cipher, "01234567890123456789012345678901");
             },
             switchCard() {
-                var active = document.getElementsByClassName(this.activeCard)[0];
-                var inactive = document.getElementsByClassName(this.inactiveCard)[0];
-
-                inactive.classList.add('lft-open');
-                active.classList.add('rgt-open');
-
                 var tmpCard = this.inactiveCard;
                 this.inactiveCard = this.activeCard;
                 this.activeCard = tmpCard;
+
+                var active = document.getElementsByClassName(this.activeCard)[0];
+                var inactive = document.getElementsByClassName(this.inactiveCard)[0];
+
+                inactive.classList.add('top-open');
+                active.classList.add('bot-open');
 
                 setTimeout(function() {
                     active.classList.remove('bck');
                     inactive.classList.add('bck');
                     setTimeout(function() {
-                        inactive.classList.remove('lft-open');
-                        active.classList.remove('rgt-open');
+                        inactive.classList.remove('top-open');
+                        active.classList.remove('bot-open');
                     }, 10);
                 }, 450);
             },
             login() {
-                // window.location.href = './dashboard';
-                console.log(this.$router);
-                this.$router.push('dashboard');
+                this.toggleProcessing();
+
+                const loginData = JSON.stringify({
+                    username: this.loginUsername,
+                    password: this.loginPassword
+                });
+
+                var requestOptions = {
+                    host: "access.brypt.com",
+                    port: 443,
+                    path: "/login",
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': loginData.length
+                    }
+                };
+
+                const request = https.request(requestOptions, (response) => {
+                    switch (response.statusCode) {
+                        case 202:
+                            this.flash.priority = 0;
+                            this.flash.message = "Success! Launching Dashboard.";
+                            let cookies = setCookie.parse(response, {decodeValues: true, map: true});
+                            console.log(cookies['auth_token']);
+                            let authCookie = cookies['auth_token'];
+                            authCookie['url'] = "https://brypt.com";
+                            ses.cookies.set(
+                                authCookie,
+                                (error) => {
+                                    console.log(error);
+                                }
+                            )
+                            this.$nextTick(() => {
+                                this.$refs.flash.showFlash();
+                                setTimeout(() => {
+                                    this.$electron.ipcRenderer.send('openDashboard');
+                                    // setTimeout(() => {
+                                    //     this.window.close();
+                                    // }, 500);
+                                }, 1500)
+                            });
+                            break;
+                        case 401:
+                            this.flash.priority = 2;
+                            this.flash.message = "Failed to Authenticate! Please Try Again.";
+                            break;
+                        case 500:
+                            this.flash.priority = 2;
+                            this.flash.message = "Internal Server Error.";
+                            break;
+                        default:
+                            this.flash.priority = 1;
+                            this.flash.message = "Unknown Error! Please Try Again.";
+                            break;
+                    }
+                    this.$refs.flash.showFlash();
+                    response.on('data', (data) => {
+                        process.stdout.write(data);
+                    });
+                });
+
+                request.on('error', (error) => {
+                    console.error(error);
+                });
+
+                request.on('socket', function(socket) {
+                    socket.setTimeout(5000);
+                    socket.on('timeout', function() {
+                        request.abort();
+                    });
+                });
+
+                request.write(loginData);
+                request.end();
             },
             register() {
-                alert( "Register..." );
+                this.toggleProcessing();
+
+                const registerData = JSON.stringify({
+                    first_name: this.registerFirstName,
+                    last_name: this.registerLastName,
+                    username: this.registerUsername,
+                    email: this.registerEmail,
+                    password: this.registerPassword,
+                    region: this.registerRegion,
+                    // birthdate: this.registerBirthDate,
+                });
+
+                console.log(registerData);
+
+                var requestOptions = {
+                    host: "access.brypt.com",
+                    port: 443,
+                    path: "/register",
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': registerData.length
+                    }
+                };
+
+                const request = https.request(requestOptions, (response) => {
+                    switch (response.statusCode) {
+                        case 202:
+                            this.flash.priority = 0;
+                            this.flash.message = "Success! You are now registered and able to log in!";
+                            break;
+                        case 406:
+                            this.flash.priority = 2;
+                            this.flash.message = "Failed to Register! Please Try Again.";
+                            break;
+                        case 500:
+                            this.flash.priority = 2;
+                            this.flash.message = "Internal Server Error.";
+                            break;
+                        default:
+                            this.flash.priority = 1;
+                            this.flash.message = "Unknown Error! Please Try Again.";
+                            break;
+                    }
+                    this.$refs.flash.showFlash();
+                    this.switchCard();
+                });
+
+                request.on('error', (error) => {
+                    console.error(error);
+                });
+
+                request.on('socket', function(socket) {
+                    socket.setTimeout(5000);
+                    socket.on('timeout', function() {
+                        request.abort();
+                    });
+                });
+
+                request.write(registerData);
+                request.end();
+            },
+            toggleProcessing: function() {
+                this.ui.processing = !this.ui.processing; // Toggle the processing tracker for the group
+                this.toggleLoader();
+
+            },
+            toggleLoader: function() {
+                this.ui.loading = !this.ui.loading; // Toggle the loading tracker for the group
             }
         }
     }
 </script>
 
 <style>
-    @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,200i,300,300i,400,400i,600,600i,700,700i,900,900i');
-    @import url('https://fonts.googleapis.com/css?family=Chivo:400,700,900');
-    /* @import url('~@/assets/assets/BebasNeueBold.otf'); */
-    @import url('https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css');
-    @import url('~@/assets/css/base.css');
     @import url('~@/assets/css/access.css');
 </style>

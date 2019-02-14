@@ -21,11 +21,11 @@
                         </div>
                     </section>
                     <section id="clusters">
-                        <!-- <cluster-context></cluster-context> -->
+                        <cluster-context></cluster-context>
                     </section>
                 </article>
                 <article id="data">
-                    <!-- <data-context></data-context> -->
+                    <data-context></data-context>
                 </article>
             </div>
         </main>
@@ -36,12 +36,15 @@
     // var crypto = require('brypt-crypto');
 
     import {CryptoInterface} from "../../crypto/crypto.js"
-
     import HeaderPartial from './Partials/HeaderPartial'
+    import Spinner from './Partials/Spinner'
+    import FlashMessage from './Partials/FlashMessage'
+    import ClusterContext from './DashboardPage/ClusterContext'
+    import DataContext from './DashboardPage/DataContext'
 
     export default {
         name: 'dashboard-page',
-        components: { HeaderPartial },
+        components: { HeaderPartial, Spinner, FlashMessage, ClusterContext, DataContext },
         data () {
             return {
 
@@ -56,5 +59,5 @@
 </script>
 
 <style>
-
+    @import url('~@/assets/css/dashboard.css');
 </style>

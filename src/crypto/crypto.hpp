@@ -1,4 +1,4 @@
-#ifndef CRYPTO_H
-#define CRYPTO_H
+#ifndef CRYPTO_HPP
+#define CRYPTO_HPP
 
 #endif

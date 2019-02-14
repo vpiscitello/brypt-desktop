@@ -1,7 +1,7 @@
 <template>
     <header class="navigation sw">
         <div class="company">
-            <!-- <img class="logo" src="./assets/img/small-line-logo.svg" alt=""> -->
+            <!-- <img class="logo" src="~@/assets/etc/brypt-logo.svg" alt=""> -->
             <h2 class="title">Brypt</h2>
         </div>
         <nav class="primary nv-m hd-m">

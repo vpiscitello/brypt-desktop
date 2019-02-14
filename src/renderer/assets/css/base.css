@@ -1,4 +1,4 @@
-@font-face { font-family: 'Bebas Neue'; font-weight: 700; src: url('~@/assets/assets/BebasNeueBold.otf');}
+@font-face { font-family: 'Bebas Neue'; font-weight: 700; src: url('~@/assets/etc/BebasNeueBold.otf');}
 
 *, :after, :before {
     -webkit-box-sizing: border-box;
@@ -28,6 +28,15 @@ body {
     background: #F4F7F8;
     background: -webkit-linear-gradient(to right, #E6E9F0, #F4F7F8);
     background: linear-gradient(to right, #E6E9F0, #F4F7F8);
+    -webkit-app-region: drag;
+}
+
+#app {
+    height: 100%;
+}
+
+#app .wrapper {
+    height: 100%;
 }
 
 /************ Text Styles ************/
@@ -97,13 +106,14 @@ header {
     justify-content: space-between;
     align-items: center;
     position: relative;
-    width: 95vw;
+    width: 100vw;
     max-width: 1840px;
     height: 75px;
-    margin: 20px 0px 10px 0px;
+    /* margin: 20px 0px 10px 0px; */
     background: #FBFBFB;
     z-index: 999;
-    border-radius: 6px;
+    /* border-radius: 6px; */
+    -webkit-app-region: drag;
 }
 
 header .company {
@@ -120,7 +130,8 @@ header .company {
 }
 
 .company .title {
-    padding: 10px 0 0 6px;
+    margin-left: 3px;
+    padding: 14px 0 0 6px;
 }
 
 
