@@ -87,6 +87,7 @@ app.on('activate', () => {
 });
 
 ipcMain.on('openDashboard', function(e, data) {
-    mainWindow.close();
-    createWindow(dashboardURL, 760, 1240, true);
+    var tempWindow = mainWindow;
+		createWindow(dashboardURL, 760, 1240, true);
+    tempWindow.close();
 });

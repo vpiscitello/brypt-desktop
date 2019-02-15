@@ -1,3 +1,6 @@
+#pragma comment(lib, "crypt32")
+#pragma comment(lib, "ws2_32.lib")
+
 #include <v8.h>
 #include <nan.h>
 
@@ -7,13 +10,13 @@
 #include <string.h>
 #include <string>
 
-#include "settings.hpp"
+//#include "settings.hpp"
 
 #define BUFF_SIZE 512
 #define HASH_SIZE 32
 #define OUR_KEY_SIZE 32
 
-namespace cryptographic {
+//namespace cryptographic {
     #include <openssl/conf.h>
     #include <openssl/err.h>
     #include <openssl/sha.h>
@@ -21,14 +24,20 @@ namespace cryptographic {
     #include <openssl/hmac.h>
     #include <openssl/des.h>
 
+    using v8::FunctionCallbackInfo;
+    using v8::Isolate;
+    using v8::Local;
+    using v8::Object;
+    using v8::String;
+    using v8::Value;
 
     // void run(const Settings *options) {
     //
     // }
 
-    void initialize(const Settings *options) {
+   // void initialize(const Settings *options) {
 
-    }
+   // }
 
     std::string aes_ctr_256_encrypt(const unsigned char* plaintext, const unsigned char* key) {
         unsigned char ciphertext[BUFF_SIZE];
@@ -84,25 +93,18 @@ namespace cryptographic {
         return std::string( reinterpret_cast< char * >( decrypted ) );
     }
 
-};
+//};
 
-namespace interface {
+//namespace interface {
 
-    using v8::FunctionCallbackInfo;
-    using v8::Isolate;
-    using v8::Local;
-    using v8::Object;
-    using v8::String;
-    using v8::Value;
-
-    using namespace cryptographic;
+   // using namespace cryptographic;
 
     void Crypto(const FunctionCallbackInfo<Value> &args) {
         Isolate* isolate = args.GetIsolate();
-        Settings* options = new Settings();
+       // Settings* options = new Settings();
 
-        options->Configure(args);
-        cryptographic::initialize(options);
+       // options->Configure(args);
+       // initialize(options);
 
         args.GetReturnValue().Set(0);
     }
@@ -115,7 +117,7 @@ namespace interface {
         std::string plaintext = std::string( *v8_plaintext );
         std::string key = std::string( *v8_key );
 
-        std::string cipher = cryptographic::aes_ctr_256_encrypt(
+        std::string cipher = aes_ctr_256_encrypt(
                                 ( const unsigned char * ) plaintext.c_str(),
                                 ( const unsigned char * ) key.c_str()
                              );
@@ -138,7 +140,7 @@ namespace interface {
         v8::String::Utf8Value v8_key( args[ 1 ] );
         std::string key = std::string( *v8_key );
 
-        std::string decrypted = cryptographic::aes_ctr_256_decrypt(
+        std::string decrypted = aes_ctr_256_decrypt(
                                 ( const unsigned char * ) cipher,
                                 ( const unsigned char * ) key.c_str(),
                                 cipherLength
@@ -157,4 +159,4 @@ namespace interface {
 
     NODE_MODULE(crypto, init)
 
-};
+//};

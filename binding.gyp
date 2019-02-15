@@ -15,7 +15,7 @@
                 'conditions': [
                     ['target_arch=="x64"', {
                         'variables': {
-                        'openssl_root%': 'C:/OpenSSL-Win64'
+                        'openssl_root%': 'C:/OpenSSL-Win64/openssl-1.1.0f-vs2017'
                     },
                     }, {
                         'variables': {
@@ -27,11 +27,13 @@
                     'uint=unsigned int',
                 ],
                 'libraries': [
-                    '-l<(openssl_root)/lib/libeay32.lib',
+                    '-l<(openssl_root)/lib64/libcryptoMT.lib',
+                    '-l<(openssl_root)/lib64/libsslMT.lib',
                 ],
                 'include_dirs': [
-                    '<(openssl_root)/include',
-                    "<!(node -e \"require('nan')\")"
+                    "<!(node -e \"require('nan')\")",
+                    "<(openssl_root)/include64/openssl",
+                    "<(openssl_root)/include64",
                 ],
             }, { # OS!="win"
                 'libraries': [
