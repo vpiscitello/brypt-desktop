@@ -124,6 +124,10 @@
         data: function() {
             return {
                 window: remote.getCurrentWindow(),
+                ui: {
+                    processing: false,
+                    loading: false // A boolean value tracking the updating state of the group
+                },
                 activeCard: "login",
                 inactiveCard: "register",
                 loginUsername: "",
@@ -140,10 +144,6 @@
                     message: "",
                     priority: 0
                 },
-                ui: {
-                    processing: false,
-                    loading: false // A boolean value tracking the updating state of the group
-                }
             };
         },
         created: function() {
@@ -157,8 +157,8 @@
             },
             test () {
                 MessageInterface.test();
-                // let cipher = CryptoInterface.encrypt("Pineapple", "01234567890123456789012345678901");
-                // let plain = CryptoInterface.decrypt(cipher, "01234567890123456789012345678901");
+                let cipher = CryptoInterface.encrypt("Pineapple", "01234567890123456789012345678901");
+                let plain = CryptoInterface.decrypt(cipher, "01234567890123456789012345678901");
             },
             switchCard() {
                 var tmpCard = this.inactiveCard;
@@ -218,9 +218,6 @@
                                 this.$refs.flash.showFlash();
                                 setTimeout(() => {
                                     this.$electron.ipcRenderer.send('openDashboard');
-                                    // setTimeout(() => {
-                                    //     this.window.close();
-                                    // }, 500);
                                 }, 1500)
                             });
                             break;

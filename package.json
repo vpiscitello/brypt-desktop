@@ -58,6 +58,7 @@
         "nan": "^2.12.1",
         "napi": "0.0.0",
         "node-addon-api": "^1.6.2",
+        "node-wifi": "^2.0.5",
         "openssl": "^1.1.0",
         "set-cookie-parser": "^2.3.5",
         "vue": "^2.5.16",
@@ -65,7 +66,8 @@
         "vue-electron": "^1.0.6",
         "vue-router": "^3.0.1",
         "vuex": "^3.0.1",
-        "vuex-electron": "^1.0.0"
+        "vuex-electron": "^1.0.0",
+        "zeromq": "^5.1.0"
     },
     "devDependencies": {
         "ajv": "^6.5.0",

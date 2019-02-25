@@ -3,10 +3,12 @@ import {
 }
 from 'electron';
 
+const bryptConnection = require('../connection');
+const bryptMessage = require("../../build/Release/brypt-message.node");
+
 if (process.env.NODE_ENV !== 'development') {
     global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\');
 }
-
 
 let mainWindow;
 const loginURL = process.env.NODE_ENV === 'development' ? `http://localhost:9080` : `file://${__dirname}/index.html`;
@@ -17,6 +19,9 @@ let winURL = "";
 let winHeight = 0,
     winWidth = 0,
     winResize = false;
+
+let bryptNetworkInfo = null;
+let bryptNodesInfo = null;
 
 function createWindow(url, height, width, resize) {
     const ses = session.fromPartition('persist:name');
@@ -88,5 +93,65 @@ app.on('activate', () => {
 
 ipcMain.on('openDashboard', function(e, data) {
     mainWindow.close();
-    createWindow(dashboardURL, 760, 1240, true);
+    setTimeout(() => {
+        createWindow(dashboardURL, 760, 1240, true);
+    }, 1500);
+});
+
+function forwardBMToRenderer(error, message) {
+    let response = new bryptMessage.Init(message);
+    console.log(response.getData());
+}
+
+ipcMain.on('startBryptConnection', function(event, data) {
+    console.log(JSON.parse(data));
+    let dataJSON = JSON.parse(data);
+
+    bryptNetworkInfo = dataJSON.network;
+    bryptNodesInfo = dataJSON.nodes;
+
+    bryptConnection.setup(bryptNetworkInfo.root_ip, bryptNetworkInfo.root_port, function(error) {
+        if (error != null) {}
+
+        let initCommand = 0;
+        let initPhase = 0;
+        let initData = 'Request for cluster information.';
+        let initKey = 'Grapefruit';
+        let initNonce = 0;
+
+        bryptConnection.send(
+            initCommand, initPhase, initData, initKey, initNonce,
+            function(error, message) {
+
+                let cycleCommand = 1;
+                let cycleData = 'Request for network sensor readings.';
+                let cycleKey = 'Pineapple';
+                let cycleNonce = 0;
+
+                bryptConnection.cycle(cycleCommand, cycleData, cycleKey, cycleNonce, forwardBMToRenderer);
+
+                // Test for sending an intermediate message
+                // setTimeout(function() {
+                //     let initCommand = 0;
+                //     let initPhase = 0;
+                //     let initData = 'Request for cluster information.';
+                //     let initKey = 'Grapefruit';
+                //     let initNonce = 0;
+                //
+                //     bryptConnection.send(
+                //         initCommand, initPhase, initData, initKey, initNonce,
+                //         function(error, message) {
+                //             console.log('!!==!!==!! INTERMEDIATE MESSAGE !!==!!==!!');
+                //         });
+                // }, 111 * 1000);
+
+                event.sender.send("recievedClusterInformation", {
+                    payload: message
+                });
+            });
+    });
+});
+
+ipcMain.on('sendBryptMessage', function(error, data) {
+    // bryptConnection.send();
 });

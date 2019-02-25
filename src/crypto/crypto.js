@@ -1,4 +1,4 @@
-let bryptCrypto = require("../../build/Release/brypt-crypto.node");
+const bryptCrypto = require("../../build/Release/brypt-crypto.node");
 
 export class CryptoInterface {
     constructor() {
