@@ -21,16 +21,18 @@ Message::Message() {
 ** Function: Constructor for Recieved Messages
 ** Description: Takes raw string input and unpacks it into the class variables.
 ** *************************************************************************/
-Message::Message(std::string raw) {
+Message::Message(std::string raw, std::string key) {
     this->raw = raw;
+		this->key = key;
     this->unpack();
+		this->aes_ctr_128_decrypt(this->data, this->data.size());
     this->response = NULL;
 }
 /* **************************************************************************
 ** Function: Constructor for new Messages
 ** Description: Initializes new messages provided the intended values.
 ** *************************************************************************/
-Message::Message(std::string node_id, CommandType command, int phase, std::string data, unsigned int nonce) {
+Message::Message(std::string node_id, CommandType command, int phase, std::string data, std::string key, unsigned int nonce) {
     this->raw = "";
     this->node_id = node_id;
     this->command = command;
@@ -41,6 +43,8 @@ Message::Message(std::string node_id, CommandType command, int phase, std::strin
     this->auth_token = "";
     this->nonce = nonce;
     this->set_timestamp();
+		this->key = key;
+		this->aes_ctr_128_encrypt(this->data, this->data.size());
 }
 
 // Getter Functions
@@ -73,6 +77,27 @@ std::string Message::get_data() {
     return this->data;
 }
 /* **************************************************************************
+** Function: get_dataLen
+** Description: Return the length of the data content of the message.
+** *************************************************************************/
+unsigned int Message::get_dataLen() {
+    return this->dataLen;
+}
+/* **************************************************************************
+** Function: get_key
+** Description: Return the key.
+** *************************************************************************/
+std::string Message::get_key() { // TODO: remove
+    return this->key;
+}
+/* **************************************************************************
+** Function: get_keyLen
+** Description: Return the key length.
+** *************************************************************************/
+unsigned int Message::get_keyLen() { // TODO: remove
+    return this->keyLen;
+}
+/* **************************************************************************
 ** Function: get_nonce
 ** Description: Return the nonce.
 ** *************************************************************************/
@@ -95,7 +120,7 @@ std::string Message::get_pack() {
     if ( this->raw == "" ) {
         this->pack();
     }
-    return this->raw.append( this->auth_token );
+    return this->raw + this->auth_token;
 }
 /* **************************************************************************
 ** Function: get_response
@@ -159,7 +184,7 @@ void Message::set_timestamp() {
 ** *************************************************************************/
 void Message::set_response(std::string node_id, std::string data, int phase) {
     if (this->response == NULL) {
-        this->response = new Message(node_id, this->command, phase, data, this->nonce + 1);
+        this->response = new Message(node_id, this->command, phase, data, this->key, this->nonce + 1);
     } else {
         this->response->set_node_id( node_id );
         this->response->set_command( this->command, phase);
@@ -215,7 +240,7 @@ void Message::pack() {
 
     packed.append( 1, 4 );	// End of telemetry pack
 
-    this->auth_token = this->hmac( packed );
+    this->auth_token = this->hmac( packed ); //TODO: Change hash
     this->raw = packed;
 }
 /* **************************************************************************
@@ -282,6 +307,170 @@ void Message::unpack() {
     this->raw = this->raw.substr( 0, ( this->raw.size() - this->auth_token.size() ) );
 
 }
+
+void Message::clear_buff(unsigned char* buff, unsigned int buffLen){
+		unsigned int i;
+		for(i=0; i < buffLen; i++){
+			buff[i] = '\0';
+		}
+}
+
+/* **************************************************************************
+** Function: aes_ctr_128_encrypt
+** Description: Encrypt a provided message with AES-CTR-128 and return ciphertext.
+** *************************************************************************/
+std::string Message::aes_ctr_128_encrypt(std::string mssg, unsigned int mssgLen) {
+     unsigned char ciphertext[512];	// Temp buffer
+     unsigned char* iv;
+
+     int length = 0;
+     this->dataLen = 0;
+
+     clear_buff(ciphertext, 512);
+    
+		 void* temp = (void *)this->nonce; 
+		 iv = (unsigned char *)temp;
+
+     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+     EVP_EncryptInit_ex( ctx, EVP_aes_128_ctr(), NULL, (const unsigned char*)this->key.c_str(), iv );
+     EVP_EncryptUpdate( ctx, ciphertext, &length, (const unsigned char*)mssg.c_str(), mssgLen + 1);
+
+     dataLen = length;
+     EVP_EncryptFinal_ex( ctx, ciphertext + length, &length );
+     dataLen += length;
+
+     EVP_CIPHER_CTX_free( ctx );
+		 strncpy((char *)this->data.c_str(), (char *)ciphertext, 512);
+
+     return std::string( reinterpret_cast< char * >( ciphertext ) );
+}
+
+/* **************************************************************************
+** Function: aes_ctr_128_decrypt
+** Description: Decrypt a provided message with AES-CTR-128 and return decrypted text.
+** *************************************************************************/
+std::string Message::aes_ctr_128_decrypt(std::string mssg, unsigned int mssgLen) {
+     unsigned char decryptedtext[512];	// Temp buffer
+     unsigned char* iv;
+
+     int length = 0;
+     this->dataLen = 0;
+
+     clear_buff(decryptedtext, 512);
+    
+		 void* temp = (void *)this->nonce; 
+		 iv = (unsigned char *)temp;
+
+     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+     EVP_DecryptInit_ex( ctx, EVP_aes_128_ctr(), NULL, (const unsigned char*)this->key.c_str(), iv );
+     EVP_DecryptUpdate( ctx, decryptedtext, &length, (const unsigned char*)mssg.c_str(), mssgLen);
+
+     dataLen = length;
+     EVP_DecryptFinal_ex( ctx, decryptedtext + length, &length );
+     dataLen += length;
+
+     EVP_CIPHER_CTX_free( ctx );
+		 strncpy((char *)this->data.c_str(), (char *)decryptedtext, 512);
+
+     return std::string( reinterpret_cast< char * >( decryptedtext ) );
+}
+
+/* **************************************************************************
+** Function: aes_ctr_256_encrypt
+** Description: Encrypt a provided message with AES-CTR-256 and return ciphertext.
+** *************************************************************************/
+std::string Message::aes_ctr_256_encrypt(std::string mssg, unsigned int mssgLen) {
+     unsigned char ciphertext[512];	// Temp buffer
+     unsigned char* iv;
+
+     int length = 0;
+     this->dataLen = 0;
+
+     clear_buff(ciphertext, 512);
+
+     void *temp = (void*)this->nonce; 
+		 iv = ( unsigned char * )temp;
+
+     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+     EVP_EncryptInit_ex( ctx, EVP_aes_256_ctr(), NULL, (const unsigned char*)this->key.c_str(), iv );
+     EVP_EncryptUpdate( ctx, ciphertext, &length, (const unsigned char*)mssg.c_str(), mssgLen + 1);
+
+     dataLen = length;
+     EVP_EncryptFinal_ex( ctx, ciphertext + length, &length );
+     dataLen += length;
+
+     EVP_CIPHER_CTX_free( ctx );
+		 strncpy((char *)this->data.c_str(), (char *)ciphertext, 512);
+
+     return std::string( reinterpret_cast< char * >( ciphertext ) );
+}
+
+/* **************************************************************************
+** Function: aes_ctr_256_decrypt
+** Description: Decrypt a provided message with AES-CTR-256 and return decrypted text.
+** *************************************************************************/
+std::string Message::aes_ctr_256_decrypt(std::string mssg, unsigned int mssgLen) {
+     unsigned char decryptedtext[512];	// Temp buffer
+     unsigned char* iv;
+
+     int length = 0;
+     this->dataLen = 0;
+
+     clear_buff(decryptedtext, 512);
+    
+		 void* temp = (void *)this->nonce; 
+		 iv = (unsigned char *)temp;
+
+     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+     EVP_DecryptInit_ex( ctx, EVP_aes_256_ctr(), NULL, (const unsigned char*)this->key.c_str(), iv );
+     EVP_DecryptUpdate( ctx, decryptedtext, &length, (const unsigned char*)mssg.c_str(), mssgLen);
+
+     dataLen = length;
+     EVP_DecryptFinal_ex( ctx, decryptedtext + length, &length );
+     dataLen += length;
+
+     EVP_CIPHER_CTX_free( ctx );
+		 strncpy((char *)this->data.c_str(), (char *)decryptedtext, 512);
+
+     return std::string( reinterpret_cast< char * >( decryptedtext ) );
+}
+
+/* **************************************************************************
+** Function: hmac_sha2
+** Description: HMAC SHA2 a provided message and return the authentication token.
+** *************************************************************************/
+std::string Message::hmac_sha2() {
+				const EVP_MD *md;
+				md = EVP_get_digestbyname("sha256");
+				const unsigned char* mssg = (const unsigned char*)data.c_str();
+				const unsigned char* k = (const unsigned char*)key.c_str();
+			//	unsigned int dataLen = get_dataLen();
+			//	unsigned int keyLen = get_keyLen();
+				unsigned int length = 0;
+				unsigned char* d;
+				d = HMAC(md, k, this->keyLen, mssg, this->dataLen, NULL, &length);
+    		std::string cppDigest = (char*)d;
+		return cppDigest;
+}
+
+/* **************************************************************************
+** Function: hmac
+** Description: HMAC Blake2s a provided message and return the authentication token.
+** *************************************************************************/
+std::string Message::hmac_blake2s() {
+				const EVP_MD *md;
+				md = EVP_get_digestbyname("blake2s256");
+				const unsigned char* mssg = (const unsigned char*)data.c_str();
+				const unsigned char* k = (const unsigned char*)key.c_str();
+			//	unsigned int dataLen = this->internal_message->get_dataLen();
+			//	unsigned int keyLen = this->internal_message->get_keyLen();
+				unsigned int length = 0;
+				unsigned char* d;
+				d = HMAC(md, k, this->keyLen, mssg, this->dataLen, NULL, &length);
+    		std::string cppDigest = (char*)d;
+		return cppDigest;
+}
+
 /* **************************************************************************
 ** Function: hmac
 ** Description: HMAC a provided message and return the authentication token.
@@ -339,9 +528,10 @@ Napi::Function func = DefineClass(env, "Init", {
     InstanceMethod("getNonce", &MessageWrapper::GetNonce),
     InstanceMethod("getTimestamp", &MessageWrapper::GetTimestamp),
     InstanceMethod("getPack", &MessageWrapper::GetPack),
-
     InstanceMethod("setResponse", &MessageWrapper::SetResponse),
     InstanceMethod("getResponse", &MessageWrapper::GetResponse),
+  //  InstanceMethod("getHmacSha2", &MessageWrapper::GetHmacSha2),
+   // InstanceMethod("getHmacBlake2s", &MessageWrapper::GetHmacBlake2s),
 
     // InstanceMethod("hmac", &MessageWrapper::GetPack),
     // InstanceMethod("verify", &MessageWrapper::GetPack),
@@ -365,10 +555,14 @@ MessageWrapper::MessageWrapper(const Napi::CallbackInfo& info) : Napi::ObjectWra
             if (!info[0].IsString()) {
                 Napi::TypeError::New(env, "Expected Raw String").ThrowAsJavaScriptException();
             }
-            // Raw String Arguement
+            if (!info[1].IsString()) {
+                Napi::TypeError::New(env, "Expected Key String").ThrowAsJavaScriptException();
+            }
+            // Raw String Argument
             std::string raw_string = info[0].As<Napi::String>();    // Get the Raw Message String
+            std::string key        = info[1].As<Napi::String>();    // Get the message key
 
-            this->internal_message = new Message( raw_string );
+            this->internal_message = new Message( raw_string, key );
             break;
         }
         case 5: {
@@ -388,18 +582,23 @@ MessageWrapper::MessageWrapper(const Napi::CallbackInfo& info) : Napi::ObjectWra
                 Napi::TypeError::New(env, "Data String Expected").ThrowAsJavaScriptException();
             }
 
-            if (!info[4].IsNumber()) {
+            if (!info[4].IsString()) {
+                Napi::TypeError::New(env, "Key String Expected").ThrowAsJavaScriptException();
+            }
+
+            if (!info[5].IsNumber()) {
                 Napi::TypeError::New(env, "Nonce Number Expected").ThrowAsJavaScriptException();
             }
 
-            // New Message Arguements
+            // New Message Arguments
             std::string node_id = info[0].As<Napi::String>();                           // Get the message sender ID
             CommandType command = ( CommandType )( int ) info[1].As<Napi::Number>();    // Get the message command type
             int phase           = info[2].As<Napi::Number>();                           // Get the message command phase
             std::string data    = info[3].As<Napi::String>();                           // Get the message data
-            unsigned int nonce  = ( unsigned int ) info[4].As<Napi::Number>();          // Get the message key nonce
+            std::string key     = info[4].As<Napi::String>();                           // Get the message key
+            unsigned int nonce  = ( unsigned int ) info[5].As<Napi::Number>();          // Get the message key nonce
 
-            this->internal_message = new Message( node_id, command, phase, data, nonce );
+            this->internal_message = new Message( node_id, command, phase, data, key, nonce );
             break;
         }
         default: {
@@ -480,3 +679,33 @@ Napi::Value MessageWrapper::GetResponse(const Napi::CallbackInfo& info) {
     std::string pack = this->internal_message->get_response();
     return Napi::String::New(info.Env(), pack);
 }
+
+
+/*std::string Message::hmac_sha2() {
+				const EVP_MD *md;
+				md = EVP_get_digestbyname("sha256");
+				const unsigned char* data = (const unsigned char*)(this->internal_message->get_data()).c_str();
+				const unsigned char* key = (const unsigned char*)(this->internal_message->get_key()).c_str();
+				unsigned int dataLen = this->internal_message->get_dataLen();
+				unsigned int keyLen = this->internal_message->get_keyLen();
+				unsigned int length = 0;
+				unsigned char* digest;
+				digest = HMAC(md, key, keyLen, data, dataLen, NULL, &length);
+    		std::string cppDigest = (char*)digest;
+		return cppDigest;
+}
+
+std::string Message::hmac_blake2s() {
+				const EVP_MD *md;
+				md = EVP_get_digestbyname("blake2s256");
+				const unsigned char* data = (const unsigned char*)(this->internal_message->get_data()).c_str();
+				const unsigned char* key = (const unsigned char*)(this->internal_message->get_key()).c_str();
+				unsigned int dataLen = this->internal_message->get_dataLen();
+				unsigned int keyLen = this->internal_message->get_keyLen();
+				unsigned int length = 0;
+				unsigned char* digest;
+				digest = HMAC(md, key, keyLen, data, dataLen, NULL, &length);
+    		std::string cppDigest = (char*)digest;
+		return cppDigest;
+}
+*/
