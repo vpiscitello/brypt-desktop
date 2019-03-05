@@ -11,69 +11,69 @@ let callbackToHandle = null;
 let jobID = 0;
 let jobs = new Map();
 
-module.exports = {
-    setup: (ip, port, callback) => {
-        console.log("Brypt Connection Setup");
-        connection.send({
-            id: jobID,
-            type: BRYPT_CONNECT,
-            payload: {
-                id: "0xFFFFFFFFFF",
-                ip: ip,
-                port: port
-            }
-        });
+function setup(ip, port, callback) {
+    console.log("Brypt Connection Setup");
+    connection.send({
+        id: jobID,
+        type: BRYPT_CONNECT,
+        payload: {
+            id: "0xFFFFFFFFFF",
+            ip: ip,
+            port: port
+        }
+    });
 
-        jobs.set(jobID, callback);
-        jobID++;
-    },
-    send: (command, phase, data, key, nonce, callback) => {
-        console.log("Sending Message to Brypt Network");
-        connection.send({
-            id: jobID,
-            type: BRYPT_REQUEST,
-            payload: {
-                command: command,
-                phase: phase,
-                data: data,
-                key: key,
-                nonce: nonce
-            }
-        });
+    jobs.set(jobID, callback);
+    jobID++;
+}
 
-        jobs.set(jobID, callback);
-        jobID++;
-    },
-    cycle: (command, data, key, nonce, callback) => {
-        console.log("Starting Brypt Send Cycle");
-        connection.send({
-            id: jobID,
-            type: BRYPT_CYCLE,
-            payload: {
-                command: command,
-                data: data,
-                key: key,
-                nonce: nonce,
-                delay: 30 * 1000
-            }
-        });
+function send(command, phase, data, key, nonce, callback) {
+    console.log("Sending Message to Brypt Network");
+    connection.send({
+        id: jobID,
+        type: BRYPT_REQUEST,
+        payload: {
+            command: command,
+            phase: phase,
+            data: data,
+            key: key,
+            nonce: nonce
+        }
+    });
 
-        jobs.set(jobID, callback);
-        jobID++;
-    },
-    collect: (callback) => {
+    jobs.set(jobID, callback);
+    jobID++;
+}
 
-        jobs.set(jobID, callback);
-        jobID++;
-    }
-};
+function cycle(command, data, key, nonce, callback) {
+    console.log("Starting Brypt Send Cycle");
+    connection.send({
+        id: jobID,
+        type: BRYPT_CYCLE,
+        payload: {
+            command: command,
+            data: data,
+            key: key,
+            nonce: nonce,
+            delay: 30 * 1000
+        }
+    });
+
+    jobs.set(jobID, callback);
+    jobID++;
+}
+
+function collect(callback) {
+
+    jobs.set(jobID, callback);
+    jobID++;
+}
 
 // Process IPC handler for messages from the parent
 connection.on('message', (message) => {
     // console.log(message);
     try {
         let callback = jobs.get(message.id);
-        console.log(message.id, callback);
         // Switch on the type of command sent
         switch (message.type) {
             case 'CONNECTED':
@@ -110,3 +110,10 @@ process.on('exit', () => {
     connection.kill('SIGINT');
     process.exit(0);
 });
+
+export default {
+    setup,
+    send,
+    cycle,
+    collect
+};

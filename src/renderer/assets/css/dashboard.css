@@ -5,10 +5,10 @@ body {
 }
 
 #app, #app .wrapper {
-    display: flex;
+    /* display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    align-items: center;
+    align-items: center; */
 }
 
 main {
@@ -41,7 +41,8 @@ div.wifi-select {
     max-width: 620px;
     position: absolute;
     top: 50%;
-    transform: translateY(-50%);
+    left: 50%;
+    transform: translateY(-50%) translateX(-50%);
 }
 
 div.wifi-select .context {
@@ -330,7 +331,8 @@ div.wifi-select .notfound button:hover {
     top: -8px;
     width: 32px;
     height: 32px;
-    font-family: 'FontAwesome';
+    font-family: 'Font Awesome 5 Pro';
+    font-weight: bold;
     font-size: 14px;
     text-align: center;
     line-height: 14px;
@@ -343,6 +345,11 @@ div.wifi-select .notfound button:hover {
     box-shadow: 2px 4px 8px #E6E9F0;
     transition: 0.3s ease-in-out all;
     z-index: 999;
+}
+
+#coordinators .nd-item.warning::before {
+    border: none;
+    box-shadow: none;
 }
 
 #coordinators .nd-item {

@@ -12,31 +12,49 @@
         <network-overview
             v-bind:id="'overview'"
             v-bind:ref="'overview'"
-            v-bind:statistics="networkData">
+            v-bind:statistics="statistics">
         </network-overview>
     </div>
 </template>
 
 <script>
+    import { mapGetters } from 'vuex'
+
     import Spinner from '../Partials/Spinner'
     import ChartContainer from './ChartContainer'
     import NetworkOverview from './NetworkOverview'
 
+    function indexOfObject(obj, arr) {
+        for (let idx = 0; idx < arr.length; idx++) {
+            if (obj.uid == arr[idx].uid) {
+                return idx;
+            }
+        }
+        return -1;
+    }
+
     export default {
         name: 'data-context',
         components: { Spinner, ChartContainer, NetworkOverview },
-        // components: {
-        //     'spinner': Spinner,
-        //     'chart-container': ChartContainer,
-        //     'network-overview': NetworkOverview,
-        // },
         props: {
-
+            readings: {
+                type: Object,
+                required: false
+            }
         },
         data: function() {
             return {
-                networkData: null,
-                statistics: null,
+                cycle: {
+                    round: 0,
+                    average: 0,
+                    collected: 0,
+                    timestamp: null,
+                },
+                statistics: {
+                    rounds: 0,
+                    average: 0,
+                    collected: 0,
+                },
                 chartData: {
                     labels: [],
                     datasets: [{
@@ -62,41 +80,55 @@
                 }
             };
         },
-        computed: {
+        computed: mapGetters(['nodes', 'nodesCount', 'node', 'clusters', 'attacks']),
+        watch: {
+            readings: function (obj) {
+                this.parseNetworkReadings(() => {
+                    this.pushAggReadingToChart();
+                });
+            }
+        },
+        created: function() {
 
         },
         methods: {
-            fetchNetworkData: function() {
-                let networkData = {
-                    aggReading: null,
-                    avgReading: null,
-                    nodeCount: null,
-                    clusterCount: null,
-                    attackCount: null,
-                    uptime: null
-                };
+            parseNetworkReadings: function(callback) {
+                let cycleEntries = Object.entries(this.readings);
+                let cycleAverage = 0;
 
-                // TODO: Fetch network data from the websocket
+                this.cycle.round += 1;
+                this.cycle.collected = cycleEntries.length;
+                this.cycle.timestamp = new Date();
 
-                // Create a new reading
-                let reading = {
-                    timestamp: new Date(),
-                    data: (Math.random() * (72 - 68) + 68).toFixed(2)
-                };
+                this.statistics.rounds = this.cycle.round;
+                this.statistics.collected += cycleEntries.length;
 
-                networkData.aggReading = reading;
-                networkData.avgReading = 68.34;
-                networkData.nodeCount = 9;
-                networkData.clusterCount = 2;
-                networkData.attackCount = 15;
-                networkData.uptime = (14 * 60 * 60) + (25 * 60);
+                console.log('On cycle', this.cycle.round, 'there have been', this.statistics.collected, 'collected.');
 
-                this.networkData = networkData;
-
-                // Update the chart with the new network data
-                this.$nextTick(() => {
-                    this.pushAggReadingToChart();
+                // Find missing data to increment irregularity rate
+                // Reduimentary method of seeing which nodes did not respond to the request either by being blocked
+                // or failed decryption/verification.
+                cycleEntries.forEach(([key, value]) => {
+                    console.log(key, '->', value);
+                    cycleAverage += value['reading'];
                 });
+
+                cycleAverage /= cycleEntries.length;
+
+                console.log('The average reading for this round is', cycleAverage);
+                this.cycle.average = cycleAverage;
+
+                if(this.statistics.average === 0) {
+                    this.statistics.average = this.cycle.average;
+                } else {
+                    let prev_count = this.statistics.rounds - 1;
+                    let numerator = (prev_count * this.statistics.average) + this.cycle.average;
+                    this.statistics.average = numerator / this.statistics.rounds;
+                    this.statistics.average = this.statistics.average;
+                    console.log(prev_count, numerator, this.statistics.average);
+                }
+
+                callback();
             },
             pushAggReadingToChart: function() {
                 // Create a new chartData object to update the chart
@@ -126,8 +158,8 @@
                 };
 
                 // Push the new label and data, chartjs-plugin-streaming will remove the items as they leave the chart
-                chartData.labels.push(this.networkData.aggReading.timestamp);
-                chartData.datasets[0].data.push(this.networkData.aggReading.data);
+                chartData.labels.push(this.cycle.timestamp);
+                chartData.datasets[0].data.push(this.cycle.average.toFixed(2));
 
                 this.chartData = chartData; // Update the bound chartData
 
@@ -135,13 +167,6 @@
             updateStatistics: function() {
 
             }
-        },
-        created: function() {
-            this.fetchNetworkData(); // Get initial data about the network
-            this.$nextTick(() => {
-                // Initiate an interval to fetch new network data every thirty seconds
-                this.dataUpdateInterval = setInterval(() => this.fetchNetworkData(), 30 * 1000);
-            });
         }
     }
 </script>

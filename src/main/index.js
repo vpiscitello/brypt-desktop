@@ -3,8 +3,8 @@ import {
 }
 from 'electron';
 
-const bryptConnection = require('../connection');
-const bryptMessage = require("../../build/Release/brypt-message.node");
+import bryptConnection from '../connection';
+import store from '../renderer/store';
 
 if (process.env.NODE_ENV !== 'development') {
     global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\');
@@ -42,16 +42,16 @@ function createWindow(url, height, width, resize) {
     winResize = resize;
 
     // Catch the first call so we load in the Login window
-    if (typeof winURL !== "string") {
+    if (typeof winURL !== 'string') {
         winURL = loginURL;
     }
-    if (typeof winHeight !== "number") {
+    if (typeof winHeight !== 'number') {
         winHeight = 580;
     }
-    if (typeof winWidth !== "number") {
+    if (typeof winWidth !== 'number') {
         winWidth = 420;
     }
-    if (typeof winResize !== "boolean") {
+    if (typeof winResize !== 'boolean') {
         winResize = false;
     }
 
@@ -71,7 +71,7 @@ function createWindow(url, height, width, resize) {
     mainWindow.loadURL(winURL);
 
     mainWindow.on('closed', () => {
-        console.log("MainWindow closed");
+        console.log('MainWindow closed');
         mainWindow = null;
     });
 }
@@ -86,36 +86,36 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
     if (mainWindow === null) {
-        console.log("Activate with no main window...");
+        console.log('Activate with no main window...');
         createWindow(winURL, winHeight, winWidth, winResize);
     }
 });
 
-ipcMain.on('openDashboard', function(e, data) {
+ipcMain.on('openDashboard', function(event, message) {
     mainWindow.close();
     setTimeout(() => {
         createWindow(dashboardURL, 760, 1240, true);
     }, 1500);
 });
 
-function forwardBMToRenderer(error, message) {
-    let response = new bryptMessage.Init(message);
-    console.log(response.getData());
+function forwardCycleDataToRenderer(error, message) {
+    mainWindow.webContents.send('cycleReadingsRecieved', message);
 }
 
-ipcMain.on('startBryptConnection', function(event, data) {
-    console.log(JSON.parse(data));
-    let dataJSON = JSON.parse(data);
+ipcMain.on('startBryptConnection', function(event, message) {
+    console.log(JSON.parse(message));
+    let messageJSON = JSON.parse(message);
 
-    bryptNetworkInfo = dataJSON.network;
-    bryptNodesInfo = dataJSON.nodes;
+    bryptNetworkInfo = messageJSON.network;
+    bryptNodesInfo = messageJSON.nodes;
 
+    // TODO: Pass in keys
     bryptConnection.setup(bryptNetworkInfo.root_ip, bryptNetworkInfo.root_port, function(error) {
         if (error != null) {}
 
         let initCommand = 0;
         let initPhase = 0;
-        let initData = 'Request for cluster information.';
+        let initData = '{uid: \"1\"}';
         let initKey = 'Grapefruit';
         let initNonce = 0;
 
@@ -128,30 +128,37 @@ ipcMain.on('startBryptConnection', function(event, data) {
                 let cycleKey = 'Pineapple';
                 let cycleNonce = 0;
 
-                bryptConnection.cycle(cycleCommand, cycleData, cycleKey, cycleNonce, forwardBMToRenderer);
+                bryptConnection.cycle(cycleCommand, cycleData, cycleKey, cycleNonce, forwardCycleDataToRenderer);
 
-                // Test for sending an intermediate message
-                // setTimeout(function() {
-                //     let initCommand = 0;
-                //     let initPhase = 0;
-                //     let initData = 'Request for cluster information.';
-                //     let initKey = 'Grapefruit';
-                //     let initNonce = 0;
-                //
-                //     bryptConnection.send(
-                //         initCommand, initPhase, initData, initKey, initNonce,
-                //         function(error, message) {
-                //             console.log('!!==!!==!! INTERMEDIATE MESSAGE !!==!!==!!');
-                //         });
-                // }, 111 * 1000);
-
-                event.sender.send("recievedClusterInformation", {
-                    payload: message
+                event.sender.send('bryptConnectionCompleted', {
+                    payload: {
+                        clusterInformation: message
+                    }
                 });
             });
     });
 });
 
-ipcMain.on('sendBryptMessage', function(error, data) {
-    // bryptConnection.send();
+ipcMain.on('sendBryptMessage', function(event, message) {
+    let destinationUID = message.destination;
+    let responseHandler = message.handler;
+
+    let messageCommand = message.payload.command;
+    let messagePhase = message.payload.phase;
+    let messageData = message.payload.data;
+
+    // TODO: map uid to keys and nonces and track state
+    // Get key and nonce from destinationUID
+    let messageKey = 'Grapefruit';
+    let messageNonce = 0;
+
+    console.log('Sending Brypt message with:', messageCommand, messagePhase, messageData, messageKey, messageNonce);
+
+    bryptConnection.send(
+        messageCommand, messagePhase, messageData, messageKey, messageNonce,
+        function(error, message) {
+            event.sender.send(responseHandler, {
+                payload: message,
+            });
+        });
 });

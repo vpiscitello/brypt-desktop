@@ -864,7 +864,7 @@ input[type=checkbox] + label::before {
     top: 5px;
     width: 34px;
     height: 34px;
-    font-family: 'FontAwesome';
+    font-family: 'Font Awesome 5 Pro';
     font-size: 0.85em;
     text-align: center;
     line-height: 14px;

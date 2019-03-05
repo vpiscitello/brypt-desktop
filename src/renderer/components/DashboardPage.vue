@@ -16,7 +16,7 @@
                                 <i class="fas fa-user-astronaut"></i>
                             </div>
                             <div class="info">
-                                <h4>Hello, <span id="name">User</span>!</h4>
+                                <h4>Hello, <span id="name">{{fullname}}</span>!</h4>
                             </div>
                         </div>
                     </section>
@@ -25,7 +25,7 @@
                     </section>
                 </article>
                 <article id="data">
-                    <data-context></data-context>
+                    <data-context v-bind:readings="this.info.readings"></data-context>
                 </article>
             </div>
         </main>
@@ -33,7 +33,7 @@
             <section class="processing" v-if="ui.processing">
                 <div class="wrapper">
                     <div class="context">
-                        <Spinner v-if="ui.loading" v-bind:color="'#2D383C'"></Spinner>
+                        <Pulser v-if="ui.loading" v-bind:color="'#2D383C'"></Pulser>
                     </div>
                 </div>
             </section>
@@ -48,8 +48,11 @@
 </template>
 
 <script>
+    import { mapGetters } from 'vuex'
+
     import HeaderPartial from './Partials/HeaderPartial';
     import Spinner from './Partials/Spinner';
+    import Pulser from './Partials/Pulser'
     import FlashMessage from './Partials/FlashMessage';
     import ClusterContext from './DashboardPage/ClusterContext';
     import DataContext from './DashboardPage/DataContext';
@@ -60,12 +63,14 @@
     const session = require('electron').remote.session;
     const setCookie = require('set-cookie-parser');
 
+    const bryptMessage = require('../../../build/Release/brypt-message.node');
+
     var ses = session.fromPartition('persist:name');
 
     export default {
         name: 'dashboard-page',
-        components: { HeaderPartial, Spinner, FlashMessage, ClusterContext, DataContext, WiFiSelect },
-        data () {
+        components: { HeaderPartial, Spinner, Pulser, FlashMessage, ClusterContext, DataContext, WiFiSelect },
+        data: function() {
             return {
                 window: remote.getCurrentWindow(),
                 ui: {
@@ -76,23 +81,61 @@
                 },
                 flash: {
                     show: false,
-                    message: "",
+                    message: '',
                     priority: 0
                 },
                 info: {
-                    network: null,
-                    nodes: null
+                    readings: null
                 }
             }
         },
+        computed: mapGetters(['fullname', 'email']),
         mounted: function() {
-            this.$electron.ipcRenderer.on('recievedClusterInformation', (event, data) => {
-                console.log("Renderer: ", data);
-            })
+
         },
         created: function() {
+
+            this.$store.dispatch('setup');
+
+            this.$electron.ipcRenderer.on('responseReceived', (event, message) => {
+                // TODO: Move to be handled in connection process
+                let response = new bryptMessage.Init(message);
+                console.log(JSON.parse(response.getData()));
+            });
+
+            this.$electron.ipcRenderer.on('clusterInfoResponse', (event, message) => {
+                // TODO: Move to be handled in connection process
+                let clusterInfoResponse = new bryptMessage.Init(message.payload);
+                let clusterNodes = JSON.parse(clusterInfoResponse.getData());
+                this.$store.dispatch('updateCluster', {
+                    nodes: clusterNodes,
+                });
+
+            });
+
+            this.$electron.ipcRenderer.on('cycleReadingsRecieved', (event, message) => {
+                this.info.readings = message;
+            });
+
+            this.$electron.ipcRenderer.on('bryptConnectionCompleted', (event, message) => {
+                // TODO: Move to be handled in connection process
+                let clusterInfoResponse = new bryptMessage.Init(message.payload.clusterInformation);
+                let clusterNodes = JSON.parse(clusterInfoResponse.getData());
+                this.$store.dispatch('updateCluster', {
+                    nodes: clusterNodes,
+                });
+
+                this.toggleProcessing();
+                this.$nextTick(() => {
+                    this.toggleDashboard();
+                });
+            });
+
+            this.$root.$on('bryptRequest', (message) => {
+                this.$electron.ipcRenderer.send('sendBryptMessage', message);
+            });
+
             this.getNetworkConnectionInfo(function(error, data){
-                // this.toggleProcessing();
                 this.toggleWiFiSelect();
                 this.$root.$on('needProcessing', () => {
                     if(!this.ui.processing) {
@@ -107,10 +150,8 @@
                     this.toggleWiFiSelect();
                     this.$electron.ipcRenderer.send('startBryptConnection', data);
                 });
-                // setTimeout(function(self) {
-                //     self.$electron.ipcRenderer.send('startBryptConnection', data);
-                // }, 30 * 1000, this );
             }.bind(this));
+
         },
         methods: {
             openLink(link) {
@@ -120,16 +161,15 @@
                 ses.cookies.get(
                     { name: 'auth_token' },
                     (error, cookies) => {
-                        console.log(error, cookies);
                         if(cookies[0]) {
-                            let authCookie = "auth_token=" + cookies[0].value;
+                            let authCookie = 'auth_token=' + cookies[0].value;
 
                             const userData = JSON.stringify({});
 
                             var requestOptions = {
-                                host: "bridge.brypt.com",
+                                host: 'bridge.brypt.com',
                                 port: 443,
-                                path: "/network",
+                                path: '/network',
                                 method: 'GET',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -141,27 +181,43 @@
                                 switch (response.statusCode) {
                                     case 202:
                                         this.flash.priority = 0;
-                                        this.flash.message = "Success!";
+                                        this.flash.message = 'Success!';
                                         break;
                                     case 401:
                                         this.flash.priority = 2;
-                                        this.flash.message = "Failed to Authenticate! Please Try Again.";
+                                        this.flash.message = 'Failed to Authenticate! Please Try Again.';
                                         break;
                                     case 500:
                                         this.flash.priority = 2;
-                                        this.flash.message = "Internal Server Error.";
+                                        this.flash.message = 'Internal Server Error.';
                                         break;
                                     default:
                                         this.flash.priority = 1;
-                                        this.flash.message = "Unknown Error! Please Try Again.";
+                                        this.flash.message = 'Unknown Error! Please Try Again.';
                                         break;
                                 }
-                                console.log(response.statusCode);
-                                // this.$refs.flash.showFlash();
                                 response.on('data', (data) => {
                                     let dataJSON = JSON.parse(data);
                                     this.info.network = dataJSON['network'];
                                     this.info.nodes = dataJSON['nodes'];
+
+                                    // TODO: Update to get this data from the network
+                                    this.info.network.clusters = 2;
+                                    this.info.network.attacks = 0;
+
+                                    this.info.nodes.forEach(function(node){
+                                        node["ireg_rate"] = 0;
+                                        node["registered_timestamp"] = new Date(node["registered_timestamp"]);
+                                    });
+
+                                    this.$store.dispatch('setNetworkState', {
+                                        network: this.info.network,
+                                    });
+
+                                    this.$store.dispatch('setNodesState', {
+                                        nodes: this.info.nodes,
+                                    });
+
                                     callback(null, data);
                                 });
                             });
@@ -191,7 +247,10 @@
                 this.ui.loading = !this.ui.loading; // Toggle the loading tracker for the group
             },
             toggleWiFiSelect: function() {
-                this.ui.wifiselect = !this.ui.wifiselect; // Toggle the loading tracker for the group
+                this.ui.wifiselect = !this.ui.wifiselect; // Toggle the WiFi selection component
+            },
+            toggleDashboard: function() {
+                this.ui.dashboard = !this.ui.dashboard; // Toggle the main dashboard component
             }
         }
     }

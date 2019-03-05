@@ -11,6 +11,8 @@ let currentJobType = null;
 let backgroundJobID = null;
 let backgroundJobType = null;
 
+let expectingResponse = false;
+
 /* **************************************************************************
  ** Function: cycleTimer
  ** Description: Handles interactive event timer such that it can be paused
@@ -143,16 +145,18 @@ class BryptConnection {
      ** always the root network coordinator.
      ** *************************************************************************/
     send(command, phase, data, key, nonce) {
-        console.log("Sending Message For: ", currentJobID, currentJobType);
+        // console.log("Sending Message For: ", currentJobID, currentJobType);
 
         if (currentJobType != 'CYCLE' && this.cycleTimer) {
             if (this.cycleTimer.active()) {
                 this.cycleTimer.pause();
             }
         }
-
         // Create a new message using the provided information
+        // TODO: Pass in provided key
         let request = new bryptMessage.Init(this.selfID, command, phase, data, nonce);
+        // console.log(request.getPack());
+        expectingResponse = true;
         this.socket.send(request.getPack()); // Send the packed message to the peer
     }
 
@@ -161,15 +165,27 @@ class BryptConnection {
      ** Description: Handle a recieved reply to the last request
      ** *************************************************************************/
     receive(message) {
-        console.log("Recived Message Handling With: ", currentJobID, currentJobType);
+        // console.log("Recived Message Handling With: ", currentJobID, currentJobType);
         switch (currentJobType) {
             case 'CYCLE':
                 {
+                    // TODO: Pass in cycle key
+                    let response = new bryptMessage.Init(message);
+                    let cycleDataJSON = JSON.parse(response.getData());
+                    let parsedDataJSON = {};
+
+                    Object.entries(cycleDataJSON).forEach(([key, value]) => {
+                        // TODO: Pass in individual key
+                        let readingMessage = new bryptMessage.Init(value);
+                        let readingJSON = JSON.parse(readingMessage.getData());
+                        parsedDataJSON[key] = readingJSON;
+                    });
+
                     process.send({
                         id: currentJobID,
                         type: BRYPT_COLLECTED,
                         payload: {
-                            collected: message
+                            collected: parsedDataJSON
                         }
                     });
                     break;
@@ -198,6 +214,8 @@ class BryptConnection {
             backgroundJobID = null;
             backgroundJobType = null;
         }
+
+        expectingResponse = false;
 
     }
 
@@ -265,21 +283,38 @@ process.on('message', (message) => {
             case 'REQUEST':
                 {
                     // Handle a command to create a cycle with the Brypt network
-                    if (currentJobID != null) {
-                        backgroundJobID = currentJobID;
-                        backgroundJobType = currentJobType;
-                    }
+                    let request = function() {
+                        let sent = false;
 
-                    currentJobID = message.id;
-                    currentJobType = 'REQUEST';
+                        if (expectingResponse) {
+                            sent = false;
+                        } else {
+                            if (currentJobID != null) {
+                                backgroundJobID = currentJobID;
+                                backgroundJobType = currentJobType;
+                            }
 
-                    connection.send(
-                        message.payload.command,
-                        message.payload.phase,
-                        message.payload.data,
-                        message.payload.key,
-                        message.payload.nonce
-                    );
+                            currentJobID = message.id;
+                            currentJobType = 'REQUEST';
+
+                            connection.send(
+                                message.payload.command,
+                                message.payload.phase,
+                                message.payload.data,
+                                message.payload.key,
+                                message.payload.nonce
+                            );
+                            sent = true;
+                        }
+
+                        if (!sent) {
+                            setTimeout(request(), 100);
+                        }
+
+                    };
+
+                    request();
+
                     break;
                 }
             default:
