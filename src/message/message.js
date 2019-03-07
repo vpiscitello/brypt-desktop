@@ -1,4 +1,4 @@
-let bryptMessage = require("../../build/Release/brypt-message.node");
+const bryptMessage = require("../../build/Release/brypt-message.node");
 // var bryptMessage = require('bindings')('brypt-message');
 
 export class MessageInterface {

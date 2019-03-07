@@ -51,12 +51,12 @@
         },
         methods: {
             showMenu: function(event, item) {
-                // console.log("Show Menu");
+                // console.log('Show Menu');
 
                 this.item = item; // Store the item being operated on
 
                 // Set and Update the context menu based on the designation of the item
-                this.itemIsBranching = (this.item.designation == "node") ? false : true;
+                this.itemIsBranching = (this.item.designation == 'node') ? false : true;
 
                 // After the DOM has been updated display the context menu
                 this.$nextTick(() => {
@@ -68,34 +68,34 @@
 
                     // Compute the width of the menu if it has not been set
                     if (!this.menuWidth || !this.menuHeight) {
-                        menu.style.visibility = "hidden";
-                        menu.style.display = "block";
+                        menu.style.visibility = 'hidden';
+                        menu.style.display = 'block';
                         this.menuWidth = menu.offsetWidth;
                         this.menuHeight = menu.offsetHeight;
-                        menu.removeAttribute("style");
+                        menu.removeAttribute('style');
                     }
 
                     let parentRect = this.$parent.$el.getBoundingClientRect();
 
                     // Set the X postion of the menu based on the item and page position
                     if ((this.menuWidth + event.pageX) >= parentRect.width) {
-                        menu.style.left = (event.pageX - parentRect.x - this.menuWidth + 2) + "px";
+                        menu.style.left = (event.pageX - parentRect.x - this.menuWidth + 2) + 'px';
                     } else {
-                        menu.style.left = (event.pageX - parentRect.x - 2) + "px";
+                        menu.style.left = (event.pageX - parentRect.x - 2) + 'px';
                     }
 
                     // Set the Y postion of the menu based on the item and page position
                     if ((this.menuHeight + event.pageY) >= window.innerHeight) {
-                        menu.style.top = (event.pageY - parentRect.y - this.menuHeight + 2) + "px";
+                        menu.style.top = (event.pageY - parentRect.y - this.menuHeight + 2) + 'px';
                     } else {
-                        menu.style.top = (event.pageY - parentRect.y - 2) + "px";
+                        menu.style.top = (event.pageY - parentRect.y - 2) + 'px';
                     }
 
                     menu.classList.add('active'); // Display the menu
                 });
             },
             hideMenu: function() {
-                // console.log("Hide Menu");
+                // console.log('Hide Menu');
                 let element = document.getElementById(this.id); // Get the menu
                 if (element) {
                     element.classList.remove('active'); // Hide the menu

@@ -105,8 +105,8 @@
 </template>
 
 <script>
-    import CryptoInterface from "../../crypto/crypto"
-    import MessageInterface from "../../message/message"
+    import CryptoInterface from '../../crypto/crypto'
+    import MessageInterface from '../../message/message'
 
     import Spinner from './Partials/Spinner'
     import FlashMessage from './Partials/FlashMessage'
@@ -124,26 +124,26 @@
         data: function() {
             return {
                 window: remote.getCurrentWindow(),
-                activeCard: "login",
-                inactiveCard: "register",
-                loginUsername: "",
-                loginPassword: "",
-                registerFirstName: "",
-                registerLastName: "",
-                registerUsername: "",
-                registerEmail: "",
-                registerPassword: "",
-                registerRegion: "",
-                // registerBirthDate: "",
-                flash: {
-                    show: false,
-                    message: "",
-                    priority: 0
-                },
                 ui: {
                     processing: false,
                     loading: false // A boolean value tracking the updating state of the group
-                }
+                },
+                activeCard: 'login',
+                inactiveCard: 'register',
+                loginUsername: '',
+                loginPassword: '',
+                registerFirstName: '',
+                registerLastName: '',
+                registerUsername: '',
+                registerEmail: '',
+                registerPassword: '',
+                registerRegion: '',
+                // registerBirthDate: '',
+                flash: {
+                    show: false,
+                    message: '',
+                    priority: 0
+                },
             };
         },
         created: function() {
@@ -157,8 +157,8 @@
             },
             test () {
                 MessageInterface.test();
-                 let cipher = CryptoInterface.encrypt("The quick brown fox jumps over the lazy dog", "01234567890123456789012345678901");
-                 let plain = CryptoInterface.decrypt(cipher, "01234567890123456789012345678901");
+                let cipher = CryptoInterface.encrypt("The quick brown fox jumps over the lazy dog", "01234567890123456789012345678901");
+                let plain = CryptoInterface.decrypt(cipher, "01234567890123456789012345678901");
             },
             switchCard() {
                 var tmpCard = this.inactiveCard;
@@ -189,9 +189,9 @@
                 });
 
                 var requestOptions = {
-                    host: "access.brypt.com",
+                    host: 'access.brypt.com',
                     port: 443,
-                    path: "/login",
+                    path: '/login',
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -203,11 +203,11 @@
                     switch (response.statusCode) {
                         case 202:
                             this.flash.priority = 0;
-                            this.flash.message = "Success! Launching Dashboard.";
+                            this.flash.message = 'Success! Launching Dashboard.';
                             let cookies = setCookie.parse(response, {decodeValues: true, map: true});
                             console.log(cookies['auth_token']);
                             let authCookie = cookies['auth_token'];
-                            authCookie['url'] = "https://brypt.com";
+                            authCookie['url'] = 'https://brypt.com';
                             ses.cookies.set(
                                 authCookie,
                                 (error) => {
@@ -218,28 +218,31 @@
                                 this.$refs.flash.showFlash();
                                 setTimeout(() => {
                                     this.$electron.ipcRenderer.send('openDashboard');
-                                    // setTimeout(() => {
-                                    //     this.window.close();
-                                    // }, 500);
-                                }, 1500)
+                                }, 1500);
                             });
                             break;
                         case 401:
                             this.flash.priority = 2;
-                            this.flash.message = "Failed to Authenticate! Please Try Again.";
+                            this.flash.message = 'Failed to Authenticate! Please Try Again.';
                             break;
                         case 500:
                             this.flash.priority = 2;
-                            this.flash.message = "Internal Server Error.";
+                            this.flash.message = 'Internal Server Error.';
                             break;
                         default:
                             this.flash.priority = 1;
-                            this.flash.message = "Unknown Error! Please Try Again.";
+                            this.flash.message = 'Unknown Error! Please Try Again.';
                             break;
                     }
                     this.$refs.flash.showFlash();
                     response.on('data', (data) => {
-                        process.stdout.write(data);
+                        let dataJSON = JSON.parse(data);
+                        this.$store.dispatch('setProfileState', {
+                            firstname: dataJSON.first_name,
+                            lastname: dataJSON.last_name,
+                            username: dataJSON.username,
+                            email: dataJSON.email,
+                        });
                     });
                 });
 
@@ -273,9 +276,9 @@
                 console.log(registerData);
 
                 var requestOptions = {
-                    host: "access.brypt.com",
+                    host: 'access.brypt.com',
                     port: 443,
-                    path: "/register",
+                    path: '/register',
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -287,19 +290,19 @@
                     switch (response.statusCode) {
                         case 202:
                             this.flash.priority = 0;
-                            this.flash.message = "Success! You are now registered and able to log in!";
+                            this.flash.message = 'Success! You are now registered and able to log in!';
                             break;
                         case 406:
                             this.flash.priority = 2;
-                            this.flash.message = "Failed to Register! Please Try Again.";
+                            this.flash.message = 'Failed to Register! Please Try Again.';
                             break;
                         case 500:
                             this.flash.priority = 2;
-                            this.flash.message = "Internal Server Error.";
+                            this.flash.message = 'Internal Server Error.';
                             break;
                         default:
                             this.flash.priority = 1;
-                            this.flash.message = "Unknown Error! Please Try Again.";
+                            this.flash.message = 'Unknown Error! Please Try Again.';
                             break;
                     }
                     this.$refs.flash.showFlash();

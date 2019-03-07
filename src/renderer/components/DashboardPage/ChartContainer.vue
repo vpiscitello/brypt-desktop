@@ -8,7 +8,7 @@
         if (!tooltipEl) {
             tooltipEl = document.createElement('div');
             tooltipEl.id = 'chartjs-tooltip';
-            tooltipEl.innerHTML = "<table></table>";
+            tooltipEl.innerHTML = '<table></table>';
             document.body.appendChild(tooltipEl);
         }
 
@@ -179,9 +179,9 @@
                         callbacks: {
                             title: function(tooltipItems, data) {
                                 return tooltipItems[0].xLabel.toLocaleString(window.navigator.language, {
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    second: "2-digit",
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    second: '2-digit',
                                     hour12: true
                                 });
                             },

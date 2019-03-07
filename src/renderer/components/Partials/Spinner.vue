@@ -24,9 +24,6 @@
                 type: String,
                 required: true
             }
-        },
-        methods: {
-
         }
     }
 </script>

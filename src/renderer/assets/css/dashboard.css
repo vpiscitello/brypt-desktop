@@ -4,6 +4,13 @@ body {
     overflow: hidden;
 }
 
+#app, #app .wrapper {
+    /* display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center; */
+}
+
 main {
     position: relative;
     height: 100%;
@@ -19,6 +26,96 @@ main .wrapper {
     position: relative;
     height: 100%;
     width: 100%;
+}
+
+section.processing {
+    height: 100vh;
+    width: 100vw;
+}
+
+div.wifi-select {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    max-width: 620px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateY(-50%) translateX(-50%);
+}
+
+div.wifi-select .context {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+div.wifi-select .context > i {
+    font-size: 64px;
+}
+
+div.wifi-select h2 {
+    margin-top: 24px;
+    font-size: 1.8em;
+    text-align: center;
+}
+
+div.wifi-select p {
+    font-size: 1.2em;
+    text-align: center;
+}
+
+div.wifi-select button {
+    display: block;
+    position: relative;
+    top: 0px;
+    width: 250px;
+    height: 45px;
+    margin: 24px auto;
+    font-size: 1.4em;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    -webkit-appearance: none;
+    border: none;
+    transition: 0.3s ease-in-out all;
+}
+
+div.wifi-select button > i {
+    font-size: 16px;
+}
+
+div.wifi-select .found button {
+    color: rgba(251, 251, 251, 0.8);
+    background: rgba(26, 204, 149, 0.8);
+    background: linear-gradient(to right top, rgba(26, 204, 148, 0.8) 0%, rgba(67, 231, 179, 0.8) 100%);
+    box-shadow: 0px 0px 20px rgba(26, 204, 149, 0.5);
+}
+
+div.wifi-select .found button:hover {
+    top: -4px;
+    color: rgba(251, 251, 251, 1);
+    background: rgb(26, 204, 149);
+    background: linear-gradient(to right top, rgb(26, 204, 148) 25%, rgb(67, 231, 179) 100%);
+    box-shadow: 0px 4px 20px rgba(26, 204, 149, 0.6);
+}
+
+div.wifi-select .notfound button {
+    color: rgba(251, 251, 251, 0.8);
+    background: rgba(26, 204, 149, 0.8);
+    background: linear-gradient(to right top, rgba(26, 204, 148, 0.8) 0%, rgba(67, 231, 179, 0.8) 100%);
+    box-shadow: 0px 0px 20px rgba(26, 204, 149, 0.5);
+}
+
+div.wifi-select .notfound button:hover {
+    top: -4px;
+    color: rgba(251, 251, 251, 1);
+    background: rgb(26, 204, 149);
+    background: linear-gradient(to right top, rgb(26, 204, 148) 25%, rgb(67, 231, 179) 100%);
+    box-shadow: 0px 4px 20px rgba(26, 204, 149, 0.6);
 }
 
 #network {
@@ -234,7 +331,8 @@ main .wrapper {
     top: -8px;
     width: 32px;
     height: 32px;
-    font-family: 'FontAwesome';
+    font-family: 'Font Awesome 5 Pro';
+    font-weight: bold;
     font-size: 14px;
     text-align: center;
     line-height: 14px;
@@ -247,6 +345,11 @@ main .wrapper {
     box-shadow: 2px 4px 8px #E6E9F0;
     transition: 0.3s ease-in-out all;
     z-index: 999;
+}
+
+#coordinators .nd-item.warning::before {
+    border: none;
+    box-shadow: none;
 }
 
 #coordinators .nd-item {

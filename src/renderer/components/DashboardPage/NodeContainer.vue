@@ -6,7 +6,7 @@
             <div v-else class="nd-group" v-bind:style="{ minHeight: groupHeight + 'px' }">
                 <node-item
                      v-for="(node, index) in nodes"
-                     v-bind:key="node.id"
+                     v-bind:key="node.uid"
                      v-bind:node="node"
                      v-bind:class="{last: index == nodes.length - 1}">
                 </node-item>

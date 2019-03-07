@@ -39,16 +39,16 @@
         },
         computed: {
             alertClass: function() {
-                let alertClass = "";
+                let alertClass = '';
                 switch (this.urgency) {
                     case 2:
-                        alertClass = "danger";
+                        alertClass = 'danger';
                         break;
                     case 1:
-                        alertClass = "warning";
+                        alertClass = 'warning';
                         break;
                     default:
-                        alertClass = "basic";
+                        alertClass = 'basic';
                         break;
                 }
                 return alertClass;
@@ -60,7 +60,7 @@
             },
             closeFlash: function() {
                 this.show = false;
-                this.$root.$emit("flash-closed");
+                this.$root.$emit('flash-closed');
             }
         }
     }
