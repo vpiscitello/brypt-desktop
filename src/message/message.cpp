@@ -365,10 +365,20 @@ MessageWrapper::MessageWrapper(const Napi::CallbackInfo& info) : Napi::ObjectWra
             if (!info[0].IsString()) {
                 Napi::TypeError::New(env, "Expected Raw String").ThrowAsJavaScriptException();
             }
-            // Raw String Arguement
+
             std::string raw_string = info[0].As<Napi::String>();    // Get the Raw Message String
 
-            this->internal_message = new Message( raw_string );
+            if (raw_string == "") {
+                Napi::TypeError::New(env,  "Raw String is Empty").ThrowAsJavaScriptException();
+            }
+
+            try {
+                this->internal_message = new Message( raw_string );
+            } catch (...) {
+                std::string err_msg = "Error instantiating message class with \"" + raw_string + "\"";
+                Napi::TypeError::New(env, err_msg).ThrowAsJavaScriptException();
+            }
+
             break;
         }
         case 5: {

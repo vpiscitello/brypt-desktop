@@ -6,14 +6,29 @@ const state = {
         fullname: '',
         username: '',
         email: '',
+        egg: false
     },
     network: null,
     nodes: null,
-    cluster: null
+    cluster: null,
+    cycle: {
+        round: 0,
+    }
 };
+
+function indexOfObjectUID(uid, arr) {
+    for (let idx = 0; idx < arr.length; idx++) {
+        if (uid == arr[idx].uid) {
+            return idx;
+        }
+    }
+    return -1;
+}
 
 const mutations = {
     SETUP: function(state) {
+
+        state.profile.egg = false;
 
         if (state.nodes !== null) {
             state.nodes.forEach(function(node) {
@@ -27,6 +42,8 @@ const mutations = {
                 node.update_timestamp = new Date(node.update_timestamp);
             });
         }
+
+        state.cycle.round = 0;
 
     },
     SET_PROFILE: function(state, {
@@ -50,6 +67,9 @@ const mutations = {
 
         state.nodes = nodes;
     },
+    FLIP_EGG: function(state) {
+        state.profile.egg = !state.profile.egg;
+    },
     UPDATE_CLUSTER: function(state, {
         clusterNodes
     }) {
@@ -71,13 +91,28 @@ const mutations = {
 
         state.cluster = matched;
     },
+    INCREMENT_CYCLE_ROUND: function(state) {
+        state.cycle.round++;
+    },
     INCREMENT_ATTACKS: function(state) {
         state.network.attacks++;
     },
     UPDATE_IREG_RATE: function(state, {
-        nodeID, rate
+        nodeUID,
+        missed,
     }) {
-        state.nodes[nodeID].ireg_rate = rate;
+        let nodeIDX = indexOfObjectUID(nodeUID, state.nodes);
+        let old_rate = state.nodes[nodeIDX].ireg_rate;
+        if (old_rate == 0) {
+            if (missed) {
+                state.nodes[nodeIDX].ireg_rate = 1;
+            }
+        } else {
+            let cycle_ratio = missed ? 1 : 0;
+            let old_count = state.cycle.round - 1;
+            let numerator = (old_count * old_rate) + cycle_ratio;
+            state.nodes[nodeIDX].ireg_rate = (numerator / state.cycle.round);
+        }
     }
 };
 
@@ -92,6 +127,9 @@ const actions = {
             username: payload.username,
             email: payload.email
         });
+    },
+    flipEgg: function(store) {
+        store.commit('FLIP_EGG');
     },
     setNetworkState: function(store, payload) {
         store.commit('SET_NETWORK', {
@@ -108,13 +146,16 @@ const actions = {
             clusterNodes: payload.nodes,
         });
     },
+    incrementCycleRound: function(store) {
+        store.commit('INCREMENT_CYCLE_ROUND');
+    },
     incrementNetworkAttacks: function(store) {
         store.commit('INCREMENT_ATTACKS');
     },
     updateIregRate: function(store, payload) {
         store.commit('UPDATE_IREG_RATE', {
-            nodeID: payload.nodeID,
-            rate: payload.rate,
+            nodeUID: payload.nodeUID,
+            missed: payload.missed
         });
     }
 };
@@ -129,20 +170,28 @@ const getters = {
     email: function(state) {
         return state.profile.email;
     },
+    egg: function(state) {
+        return state.profile.egg;
+    },
     nodes: function(state) {
         return state.nodes;
     },
     nodesCount: function(state) {
         return state.nodes.length;
     },
-    node: function(state, id) {
-        return state.nodes[id];
+    fetchNode: function(state, uid) {
+        let nodeIDX = indexOfObjectUID(uid, state.nodes);
+        return state.nodes[nodeIDX];
     },
     cluster: function(state) {
         return state.cluster;
     },
-    nodeIregRate: function(state, id) {
-        return state.nodes[id].ireg_rate;
+    cycleRounds: function(state) {
+        return state.cycle.rounds;
+    },
+    fetchIregRate: (state) => (uid) => {
+        let nodeIDX = indexOfObjectUID(uid, state.nodes);
+        return state.nodes[nodeIDX].ireg_rate;
     },
     clusters: function(state) {
         return state.network.clusters;

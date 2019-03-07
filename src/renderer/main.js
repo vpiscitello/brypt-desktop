@@ -29,5 +29,38 @@ new Vue({
     },
     router,
     store,
-    template: '<App/>'
+    template: '<App/>',
+    data: function() {
+        return {
+            code: [38, 38, 40, 40, 37, 39, 37, 39, 66, 65],
+            chain: []
+        };
+    },
+    created: function() {
+        window.addEventListener('keyup', this.trackKeyChain);
+    },
+    methods: {
+        trackKeyChain: function(event) {
+            const key = event.keyCode;
+
+            this.chain.push(key);
+
+            let codeSlice = this.code.slice(0, this.chain.length);
+            let idx = -1;
+            let matching = this.chain.every(function(key) {
+                idx++;
+                return key === codeSlice[idx];
+            });
+
+            if (matching) {
+                if (this.chain.length === this.code.length) {
+                    this.$store.dispatch('flipEgg');
+                    this.chain.length = 0;
+                }
+            } else {
+                this.chain.length = 0;
+            }
+
+        }
+    }
 }).$mount('#app');
