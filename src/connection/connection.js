@@ -170,24 +170,33 @@ class BryptConnection {
             case 'CYCLE':
                 {
                     // TODO: Pass in cycle key
-                    let response = new bryptMessage.Init(message);
-                    let cycleDataJSON = JSON.parse(response.getData());
-                    let parsedDataJSON = {};
+                    try {
+                        let response = new bryptMessage.Init(message);
+                        let cycleDataJSON = JSON.parse(response.getData());
+                        let parsedDataJSON = {};
 
-                    Object.entries(cycleDataJSON).forEach(([key, value]) => {
-                        // TODO: Pass in individual key
-                        let readingMessage = new bryptMessage.Init(value);
-                        let readingJSON = JSON.parse(readingMessage.getData());
-                        parsedDataJSON[key] = readingJSON;
-                    });
+                        Object.entries(cycleDataJSON).forEach(([key, value]) => {
+                            // TODO: Pass in individual key
+                            try {
+                                let readingMessage = new bryptMessage.Init(value);
+                                let readingJSON = JSON.parse(readingMessage.getData());
+                                parsedDataJSON[key] = readingJSON;
+                            } catch (error) {
+                                console.log(error);
+                                parsedDataJSON[key] = "";
+                            }
+                        });
 
-                    process.send({
-                        id: currentJobID,
-                        type: BRYPT_COLLECTED,
-                        payload: {
-                            collected: parsedDataJSON
-                        }
-                    });
+                        process.send({
+                            id: currentJobID,
+                            type: BRYPT_COLLECTED,
+                            payload: {
+                                collected: parsedDataJSON
+                            }
+                        });
+                    } catch (error) {
+                        console.log('Error occured in unwrapping outer cycle message.');
+                    }
                     break;
                 }
             case 'REQUEST':

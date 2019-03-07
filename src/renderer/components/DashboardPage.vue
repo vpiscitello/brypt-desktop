@@ -44,6 +44,7 @@
                 v-bind:target="info.network">
             </WiFiSelect>
         </transition>
+        <Egg v-if="egg"></Egg>
     </div>
 </template>
 
@@ -54,6 +55,7 @@
     import Spinner from './Partials/Spinner';
     import Pulser from './Partials/Pulser'
     import FlashMessage from './Partials/FlashMessage';
+    import Egg from './Partials/Egg';
     import ClusterContext from './DashboardPage/ClusterContext';
     import DataContext from './DashboardPage/DataContext';
     import WiFiSelect from './DashboardPage/WiFiSelect';
@@ -69,7 +71,7 @@
 
     export default {
         name: 'dashboard-page',
-        components: { HeaderPartial, Spinner, Pulser, FlashMessage, ClusterContext, DataContext, WiFiSelect },
+        components: { HeaderPartial, Spinner, Pulser, FlashMessage, Egg, ClusterContext, DataContext, WiFiSelect },
         data: function() {
             return {
                 window: remote.getCurrentWindow(),
@@ -89,7 +91,7 @@
                 }
             }
         },
-        computed: mapGetters(['fullname', 'email']),
+        computed: mapGetters(['fullname', 'email', 'egg']),
         mounted: function() {
 
         },
@@ -203,7 +205,7 @@
 
                                     // TODO: Update to get this data from the network
                                     this.info.network.clusters = 2;
-                                    this.info.network.attacks = 0;
+                                    this.info.network.attacks = 0.0;
 
                                     this.info.nodes.forEach(function(node){
                                         node["ireg_rate"] = 0;

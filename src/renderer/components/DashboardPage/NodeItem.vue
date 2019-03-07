@@ -15,7 +15,7 @@
             </div>
             <div class="col">
                 <p class="label">Irregularity Rate</p>
-                <p class="data">{{ node.ireg_rate }}</p>
+                <p class="data">{{ iregRate | toFixed(3) }}</p>
             </div>
             <div class="col">
                 <p class="label">Date Added</p>
@@ -31,6 +31,8 @@
 </template>
 
 <script>
+    import { mapGetters } from 'vuex'
+
     export default {
         name: 'node-item',
         props: {
@@ -58,9 +60,13 @@
             };
         },
         computed: {
+            ...mapGetters(['fetchIregRate']),
+            iregRate: function() {
+                return this.fetchIregRate(this.node.uid);
+            },
             // Defines whether or not the node exhibits abnormal behavior on the network
             irregular: function() {
-                return this.node.ireg_rate > 0.25;
+                return this.iregRate > 0.25;
             },
             // The left zero pading for the node ID
             zeroPad: function() {
@@ -70,6 +76,9 @@
             }
         },
         filters: {
+            toFixed: function(number, places) {
+                return number.toFixed(places);
+            },
             toTimeString: function(timestamp) {
                 // let date = new Date(timestamp * 1000); // Convert the provided timestamp to a Date object
                 // Return a Locale Date string in the format Month Day, Year, Hour:Minute

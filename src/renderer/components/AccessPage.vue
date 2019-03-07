@@ -101,15 +101,19 @@
             </transition>
 
         </main>
+        <Egg v-if="egg"></Egg>
     </div>
 </template>
 
 <script>
+    import { mapGetters } from 'vuex'
+
     import CryptoInterface from '../../crypto/crypto'
     import MessageInterface from '../../message/message'
 
     import Spinner from './Partials/Spinner'
     import FlashMessage from './Partials/FlashMessage'
+    import Egg from './Partials/Egg'
 
     const remote = require('electron').remote;
     const https = require('https');
@@ -120,7 +124,7 @@
 
     export default {
         name: 'access-page',
-        components: { Spinner, FlashMessage },
+        components: { Spinner, FlashMessage, Egg },
         data: function() {
             return {
                 window: remote.getCurrentWindow(),
@@ -146,7 +150,10 @@
                 },
             };
         },
+        computed: mapGetters(['egg']),
         created: function() {
+            this.$store.dispatch('setup');
+            
             this.$root.$on('flash-closed', () => {
                 this.toggleProcessing();
             });

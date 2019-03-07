@@ -80,9 +80,10 @@
                 }
             };
         },
-        computed: mapGetters(['nodes', 'nodesCount', 'node', 'clusters', 'attacks']),
+        computed: mapGetters(['nodes', 'nodesCount', 'fetchNode', 'clusters', 'attacks']),
         watch: {
             readings: function (obj) {
+                this.$store.dispatch('incrementCycleRound');
                 this.parseNetworkReadings(() => {
                     this.pushAggReadingToChart();
                 });
@@ -105,15 +106,27 @@
 
                 console.log('On cycle', this.cycle.round, 'there have been', this.statistics.collected, 'collected.');
 
-                // Find missing data to increment irregularity rate
-                // Reduimentary method of seeing which nodes did not respond to the request either by being blocked
-                // or failed decryption/verification.
-                cycleEntries.forEach(([key, value]) => {
-                    console.log(key, '->', value);
-                    cycleAverage += value['reading'];
-                });
+                let missing = 0;
+                cycleEntries.forEach(function([key, value]) {
+                    let missed = false;
+                    // Reduimentary method of seeing which nodes did not respond to the request either by being blocked
+                    // or failed decryption/verification.
+                    if(value === '') {
+                        missed = true;
+                        this.$store.dispatch('incrementNetworkAttacks');
+                        missing++;
+                    } else {
+                        cycleAverage += value['reading'];
+                    }
 
-                cycleAverage /= cycleEntries.length;
+                    this.$store.dispatch('updateIregRate', {
+                        nodeUID: key,
+                        missed: missed
+                    });
+
+                }.bind(this));
+
+                cycleAverage /= (cycleEntries.length - missing);
 
                 console.log('The average reading for this round is', cycleAverage);
                 this.cycle.average = cycleAverage;
