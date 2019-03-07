@@ -91,8 +91,8 @@ class Message {
 				std::string aes_ctr_256_encrypt(std::string mssg, unsigned int mssgLen);
 				std::string aes_ctr_256_decrypt(std::string mssg, unsigned int mssgLen);
         std::string hmac(std::string message);
-				std::string hmac_sha2();
-				std::string hmac_blake2s();
+				std::string hmac_sha2(std::string mssgData, int mssgLen);
+				std::string hmac_blake2s(std::string mssgData, int mssgLen);
         bool verify();
 };
 

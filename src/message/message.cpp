@@ -240,7 +240,7 @@ void Message::pack() {
 
     packed.append( 1, 4 );	// End of telemetry pack
 
-    this->auth_token = this->hmac( packed ); //TODO: Change hash
+    this->auth_token = this->hmac_sha2( packed , packed.size() ); 
     this->raw = packed;
 }
 /* **************************************************************************
@@ -439,34 +439,34 @@ std::string Message::aes_ctr_256_decrypt(std::string mssg, unsigned int mssgLen)
 ** Function: hmac_sha2
 ** Description: HMAC SHA2 a provided message and return the authentication token.
 ** *************************************************************************/
-std::string Message::hmac_sha2() {
+std::string Message::hmac_sha2(std::string mssgData, int mssgLen) {
 				const EVP_MD *md;
 				md = EVP_get_digestbyname("sha256");
-				const unsigned char* mssg = (const unsigned char*)data.c_str();
+				const unsigned char* mssg = (const unsigned char*)mssgData.c_str();
 				const unsigned char* k = (const unsigned char*)key.c_str();
 			//	unsigned int dataLen = get_dataLen();
 			//	unsigned int keyLen = get_keyLen();
 				unsigned int length = 0;
 				unsigned char* d;
-				d = HMAC(md, k, this->keyLen, mssg, this->dataLen, NULL, &length);
+				d = HMAC(md, k, this->keyLen, mssg, mssgLen, NULL, &length);
     		std::string cppDigest = (char*)d;
 		return cppDigest;
 }
 
 /* **************************************************************************
-** Function: hmac
+** Function: hmac_blake2s
 ** Description: HMAC Blake2s a provided message and return the authentication token.
 ** *************************************************************************/
-std::string Message::hmac_blake2s() {
+std::string Message::hmac_blake2s(std::string mssgData, int mssgLen) {
 				const EVP_MD *md;
 				md = EVP_get_digestbyname("blake2s256");
-				const unsigned char* mssg = (const unsigned char*)data.c_str();
+				const unsigned char* mssg = (const unsigned char*)mssgData.c_str();
 				const unsigned char* k = (const unsigned char*)key.c_str();
 			//	unsigned int dataLen = this->internal_message->get_dataLen();
 			//	unsigned int keyLen = this->internal_message->get_keyLen();
 				unsigned int length = 0;
 				unsigned char* d;
-				d = HMAC(md, k, this->keyLen, mssg, this->dataLen, NULL, &length);
+				d = HMAC(md, k, this->keyLen, mssg, mssgLen, NULL, &length);
     		std::string cppDigest = (char*)d;
 		return cppDigest;
 }
@@ -503,7 +503,7 @@ bool Message::verify() {
     std::string check_token = "";
 
     if (this->raw != "" || this->auth_token != "") {
-        check_token = this->hmac( this->raw );
+        check_token = this->hmac_sha2( this->raw , this->raw.size() );
         if (this->auth_token == check_token) {
             verified = true;
         }
