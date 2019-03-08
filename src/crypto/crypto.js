@@ -7,7 +7,7 @@ export class CryptoInterface {
     encrypt(plaintext, key) {
         console.log("Running Encryption...");
         let cipher = bryptCrypto.encrypt(plaintext, key);
-        console.log(cipher);
+        console.log(Array.prototype.map.call(new Uint8Array(cipher), x => ('00' + x.toString(16)).slice(-2)).join(''));
         return cipher;
     }
     decrypt(ciphertext, key) {

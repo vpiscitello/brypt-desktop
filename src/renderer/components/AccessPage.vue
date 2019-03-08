@@ -164,8 +164,8 @@
             },
             test () {
                 MessageInterface.test();
-                let cipher = CryptoInterface.encrypt('Pineapple', '01234567890123456789012345678901');
-                let plain = CryptoInterface.decrypt(cipher, '01234567890123456789012345678901');
+                let cipher = CryptoInterface.encrypt("The quick brown fox jumps over the lazy dog", "01234567890123456789012345678901");
+                let plain = CryptoInterface.decrypt(cipher, "01234567890123456789012345678901");
             },
             switchCard() {
                 var tmpCard = this.inactiveCard;
