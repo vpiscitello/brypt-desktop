@@ -62,31 +62,37 @@
                 this.ui.show = false;
                 this.$root.$emit('needProcessing');
 
-                wifi.scan( function(error, networks) {
-                    if(error) {
-                        console.log(error);
-                    } else {
-                        let foundBryptNet = Object.keys(networks).filter( function(key) {
-                            return networks[key].ssid == this.target.root_ap;
-                        }.bind(this)).reduce(function(object, key) {
-                            this.found.key = key;
-                            object[key] = networks[key];
-                            return object;
-                        }.bind(this), {});
 
-                        if(Object.keys(foundBryptNet).length != 0) {
-                            this.found.empty = false;
-                        }
+								try {
+                	wifi.scan( function(error, networks) {
+                  	  if(error) {
+													console.log("in wifi scan");
+                      	  console.log(error);
+                   		 } else {
+                    	    let foundBryptNet = Object.keys(networks).filter( function(key) {
+                      	      return networks[key].ssid == this.target.root_ap;
+                      	  }.bind(this)).reduce(function(object, key) {
+                       	     this.found.key = key;
+                       	     object[key] = networks[key];
+                       	     return object;
+                       		 }.bind(this), {});
 
-                        this.found.networks = foundBryptNet;
-                        this.$root.$emit('doneProcessing');
+                        	if(Object.keys(foundBryptNet).length != 0) {
+                          	  this.found.empty = false;
+                       		 }
 
-                        setTimeout(function() {
-                            this.ui.show = true;
-                        }.bind(this), 500)
+                       		 this.found.networks = foundBryptNet;
+                       		 this.$root.$emit('doneProcessing');
 
-                    }
-                }.bind(this));
+                        		setTimeout(function() {
+                          		  this.ui.show = true;
+                      		  }.bind(this), 500)
+
+                    			}
+                			}.bind(this));
+									} catch( error ) {
+											console.log("Wifi scan error");
+									}
             }
         },
         created: function() {
@@ -96,9 +102,10 @@
                 iface: null
             });
 
-            this.scanForNetwork();
-
-        }
+        },
+				beforeMount: function() {
+						this.scanForNetwork();
+				}
     }
 </script>
 

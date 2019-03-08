@@ -1,5 +1,7 @@
+#if defined _WIN32
 #pragma comment(lib, "crypt32")
 #pragma comment(lib, "ws2_32.lib")
+#endif
 
 #include <v8.h>
 #include <nan.h>
