@@ -20,22 +20,24 @@ class Message {
     private:
         std::string raw;                // Raw string format of the message
 
-        std::string node_id;            // ID of the sending node
+        std::string source_id;          // ID of the sending node
+        std::string destination_id;     // ID of the receiving node
+        std::string await_id;           // ID of the awaiting request on a passdown message
 
         CommandType command;            // Command type to be run
-        unsigned int phase;                      // Phase of the Command state
+        unsigned int phase;             // Phase of the Command state
 
         std::string data;               // Encrypted data to be sent
         std::string timestamp;          // Current timestamp
 
-        class Message * response;             // A circular message for the response to the current message
+        Message * response;             // A circular message for the response to the current message
 
         std::string auth_token;         // Current authentication token created via HMAC
         unsigned int nonce;             // Current message nonce
 
         enum MessageChunk {
-            NODEID_CHUNK, COMMAND_CHUNK, PHASE_CHUNK, NONCE_CHUNK, DATASIZE_CHUNK, DATA_CHUNK, TIMESTAMP_CHUNK,
-            FIRST_CHUNK = NODEID_CHUNK,
+            SOURCEID_CHUNK, DESTINATIONID_CHUNK, COMMAND_CHUNK, PHASE_CHUNK, NONCE_CHUNK, DATASIZE_CHUNK, DATA_CHUNK, TIMESTAMP_CHUNK,
+            FIRST_CHUNK = SOURCEID_CHUNK,
             LAST_CHUNK = TIMESTAMP_CHUNK
         };
 
@@ -43,10 +45,12 @@ class Message {
         // Constructors Functions
         Message();
         Message(std::string raw);
-        Message(std::string node_id, CommandType command, int phase, std::string data, unsigned int nonce);
+        Message(std::string source_id, std::string destination_id, CommandType command, int phase, std::string data, unsigned int nonce);
 
         // Getter Functions
-        std::string get_node_id();
+        std::string get_source_id();
+        std::string get_destination_id();
+        std::string get_await_id();
         CommandType get_command();
         unsigned int get_phase();
         std::string get_data();
@@ -56,12 +60,13 @@ class Message {
         std::string get_response();
 
         // Setter Functions
-        void set_node_id(std::string node_id);
+        void set_source_id(std::string source_id);
+        void set_destination_id(std::string destination_id);
         void set_command(CommandType command, int phase);
         void set_data(std::string data);
         void set_nonce(unsigned int nonce);
         void set_timestamp();
-        void set_response(std::string node_id, std::string data, int phase);
+        void set_response(std::string source_id, std::string data);
 
         // Utility Functions
         std::string pack_chunk(std::string content);
@@ -80,7 +85,8 @@ class MessageWrapper : public Napi::ObjectWrap<MessageWrapper> {
     private:
         static Napi::FunctionReference constructor;
 
-        Napi::Value GetSender(const Napi::CallbackInfo& info);
+        Napi::Value GetSource(const Napi::CallbackInfo& info);
+        Napi::Value GetDestination(const Napi::CallbackInfo& info);
         Napi::Value GetCommand(const Napi::CallbackInfo& info);
         Napi::Value GetPhase(const Napi::CallbackInfo& info);
         Napi::Value GetData(const Napi::CallbackInfo& info);

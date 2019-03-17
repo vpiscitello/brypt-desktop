@@ -7,8 +7,9 @@
 ** *************************************************************************/
 Message::Message() {
     this->raw = "";
-    this->node_id = "";
-    this->command = NULL_CMD;
+    this->source_id = "";
+    this->destination_id = "";
+    this->command = NO_CMD;
     this->phase = -1;
     this->data = "";
     this->timestamp = "";
@@ -30,9 +31,10 @@ Message::Message(std::string raw) {
 ** Function: Constructor for new Messages
 ** Description: Initializes new messages provided the intended values.
 ** *************************************************************************/
-Message::Message(std::string node_id, CommandType command, int phase, std::string data, unsigned int nonce) {
+Message::Message(std::string source_id, std::string destination_id, CommandType command, int phase, std::string data, unsigned int nonce) {
     this->raw = "";
-    this->node_id = node_id;
+    this->source_id = source_id;
+    this->destination_id = destination_id;
     this->command = command;
     this->phase = phase;
     this->data = data;
@@ -45,11 +47,25 @@ Message::Message(std::string node_id, CommandType command, int phase, std::strin
 
 // Getter Functions
 /* **************************************************************************
-** Function: get_node_id
+** Function: get_source_id
 ** Description: Return the ID of the Node that sent the message.
 ** *************************************************************************/
-std::string Message::get_node_id() {
-    return this->node_id;
+std::string Message::get_source_id() {
+    return this->source_id;
+}
+/* **************************************************************************
+** Function: get_destination_id
+** Description: Return the ID of the Node message going to.
+** *************************************************************************/
+std::string Message::get_destination_id() {
+    return this->destination_id;
+}
+/* **************************************************************************
+** Function: get_await_id
+** Description: Return the ID of the AwaitObject attached to flood request.
+** *************************************************************************/
+std::string Message::get_await_id() {
+    return this->await_id;
 }
 /* **************************************************************************
 ** Function: get_command
@@ -110,11 +126,18 @@ std::string Message::get_response() {
 
 // Setter Functions
 /* **************************************************************************
-** Function: set_node_id
+** Function: set_source_id
 ** Description: Set the Node ID of the message.
 ** *************************************************************************/
-void Message::set_node_id(std::string node_id) {
-    this->node_id = node_id;
+void Message::set_source_id(std::string source_id) {
+    this->source_id = source_id;
+}
+/* **************************************************************************
+** Function: set_destination_id
+** Description: Set the Node ID of the message.
+** *************************************************************************/
+void Message::set_destination_id(std::string destination_id) {
+    this->destination_id = destination_id;
 }
 /* **************************************************************************
 ** Function: set_command
@@ -143,26 +166,20 @@ void Message::set_nonce(unsigned int nonce) {
 ** Description: Determine the timestamp of the message using the system clock.
 ** *************************************************************************/
 void Message::set_timestamp() {
-    std::stringstream ss;
-    std::chrono::seconds seconds;
-    std::chrono::time_point<std::chrono::system_clock> current_time;
-    current_time = std::chrono::system_clock::now();
-    seconds = std::chrono::duration_cast<std::chrono::seconds>( current_time.time_since_epoch() );
-    ss.clear();
-    ss << seconds.count();
-    this->timestamp = ss.str();
+    this->timestamp = get_system_timestamp();
 }
 /* **************************************************************************
 ** Function: set_response
 ** Description: Set the message Response provided the data content and sending
 ** Node ID.
 ** *************************************************************************/
-void Message::set_response(std::string node_id, std::string data, int phase) {
+void Message::set_response(std::string source_id, std::string data) {
     if (this->response == NULL) {
-        this->response = new Message(node_id, this->command, phase, data, this->nonce + 1);
+        this->response = new Message(source_id, this->source_id, this->command, this->phase + 1, data, this->nonce + 1);
     } else {
-        this->response->set_node_id( node_id );
-        this->response->set_command( this->command, phase);
+        this->response->set_source_id( source_id );
+        this->response->set_destination_id( this->source_id );
+        this->response->set_command( this->command, this->phase + 1 );
         this->response->set_data( data );
         this->response->set_nonce( this->nonce + 1 );
     }
@@ -205,7 +222,8 @@ void Message::pack() {
 
     packed.append( 1, 1 );	// Start of telemetry pack
 
-    packed.append( this->pack_chunk( this->node_id ) );
+    packed.append( this->pack_chunk( this->source_id ) );
+    packed.append( this->pack_chunk( this->destination_id ) );
     packed.append( this->pack_chunk( (unsigned int)this->command ) );
     packed.append( this->pack_chunk( (unsigned int)this->phase ) );
     packed.append( this->pack_chunk( (unsigned int)this->nonce ) );
@@ -233,9 +251,13 @@ void Message::unpack() {
         std::size_t chunk_end = this->raw.find( ( char ) 29, last_end + 1 );     // Find chunk seperator
 
         switch (chunk) {
-            // Node ID
-            case NODEID_CHUNK:
-                this->node_id = this->raw.substr( last_end + 2, ( chunk_end - 1 ) - ( last_end + 2) );
+            // Source ID
+            case SOURCEID_CHUNK:
+                this->source_id = this->raw.substr( last_end + 2, ( chunk_end - 1 ) - ( last_end + 2) );
+                break;
+            // Destination ID
+            case DESTINATIONID_CHUNK:
+                this->destination_id = this->raw.substr( last_end + 2, ( chunk_end - 1 ) - ( last_end + 2) );
                 break;
             // Command Type
             case COMMAND_CHUNK:
@@ -280,6 +302,19 @@ void Message::unpack() {
 
     this->auth_token = this->raw.substr( last_end + 2 );
     this->raw = this->raw.substr( 0, ( this->raw.size() - this->auth_token.size() ) );
+
+    std::size_t id_sep_found;
+    id_sep_found = this->source_id.find(ID_SEPERATOR);
+    if (id_sep_found != std::string::npos) {
+        this->await_id = this->source_id.substr(id_sep_found + 1);
+        this->source_id = this->source_id.substr(0, id_sep_found);
+    }
+
+    id_sep_found = this->destination_id.find(ID_SEPERATOR);
+    if (id_sep_found != std::string::npos) {
+        this->await_id = this->destination_id.substr(id_sep_found + 1);
+        this->destination_id = this->destination_id.substr(0, id_sep_found);
+    }
 
 }
 /* **************************************************************************
@@ -332,7 +367,8 @@ Napi::Object MessageWrapper::Init(Napi::Env env, Napi::Object exports) {
 Napi::HandleScope scope(env);
 
 Napi::Function func = DefineClass(env, "Init", {
-    InstanceMethod("getSender", &MessageWrapper::GetSender),
+    InstanceMethod("getSource", &MessageWrapper::GetSource),
+    InstanceMethod("getDestination", &MessageWrapper::GetDestination),
     InstanceMethod("getCommand", &MessageWrapper::GetCommand),
     InstanceMethod("getPhase", &MessageWrapper::GetPhase),
     InstanceMethod("getData", &MessageWrapper::GetData),
@@ -381,35 +417,40 @@ MessageWrapper::MessageWrapper(const Napi::CallbackInfo& info) : Napi::ObjectWra
 
             break;
         }
-        case 5: {
+        case 6: {
             if (!info[0].IsString()) {
-                Napi::TypeError::New(env, "Node ID String Expected").ThrowAsJavaScriptException();
+                Napi::TypeError::New(env, "Source ID String Expected").ThrowAsJavaScriptException();
             }
 
-            if (!info[1].IsNumber()) {
-                Napi::TypeError::New(env, "Command Number Expected").ThrowAsJavaScriptException();
+            if (!info[1].IsString()) {
+                Napi::TypeError::New(env, "Destination ID String Expected").ThrowAsJavaScriptException();
             }
 
             if (!info[2].IsNumber()) {
+                Napi::TypeError::New(env, "Command Number Expected").ThrowAsJavaScriptException();
+            }
+
+            if (!info[3].IsNumber()) {
                 Napi::TypeError::New(env, "Phase Number Expected").ThrowAsJavaScriptException();
             }
 
-            if (!info[3].IsString()) {
+            if (!info[4].IsString()) {
                 Napi::TypeError::New(env, "Data String Expected").ThrowAsJavaScriptException();
             }
 
-            if (!info[4].IsNumber()) {
+            if (!info[5].IsNumber()) {
                 Napi::TypeError::New(env, "Nonce Number Expected").ThrowAsJavaScriptException();
             }
 
             // New Message Arguements
-            std::string node_id = info[0].As<Napi::String>();                           // Get the message sender ID
-            CommandType command = ( CommandType )( int ) info[1].As<Napi::Number>();    // Get the message command type
-            int phase           = info[2].As<Napi::Number>();                           // Get the message command phase
-            std::string data    = info[3].As<Napi::String>();                           // Get the message data
+            std::string source_id = info[0].As<Napi::String>();                           // Get the message source ID
+            std::string destination_id = info[1].As<Napi::String>();                           // Get the message destination ID
+            CommandType command = ( CommandType )( int ) info[2].As<Napi::Number>();    // Get the message command type
+            int phase           = info[3].As<Napi::Number>();                           // Get the message command phase
+            std::string data    = info[4].As<Napi::String>();                           // Get the message data
             unsigned int nonce  = ( unsigned int ) info[4].As<Napi::Number>();          // Get the message key nonce
 
-            this->internal_message = new Message( node_id, command, phase, data, nonce );
+            this->internal_message = new Message( source_id, destination_id, command, phase, data, nonce );
             break;
         }
         default: {
@@ -420,8 +461,13 @@ MessageWrapper::MessageWrapper(const Napi::CallbackInfo& info) : Napi::ObjectWra
 
 }
 
-Napi::Value MessageWrapper::GetSender(const Napi::CallbackInfo& info) {
-    std::string node_id = this->internal_message->get_node_id();
+Napi::Value MessageWrapper::GetSource(const Napi::CallbackInfo& info) {
+    std::string node_id = this->internal_message->get_source_id();
+    return Napi::String::New(info.Env(), node_id);
+}
+
+Napi::Value MessageWrapper::GetDestination(const Napi::CallbackInfo& info) {
+    std::string node_id = this->internal_message->get_destination_id();
     return Napi::String::New(info.Env(), node_id);
 }
 
@@ -461,8 +507,8 @@ Napi::Value MessageWrapper::SetResponse(const Napi::CallbackInfo& info) {
 
     int argc = info.Length();
 
-    if (argc != 3) {
-        Napi::Error::New(env, "Invalid Number of Arguements. Set the Response by providing your ID, Data, and Command Phase.").ThrowAsJavaScriptException();
+    if (argc != 2) {
+        Napi::Error::New(env, "Invalid Number of Arguements. Set the Response by providing your ID and Data.").ThrowAsJavaScriptException();
     }
 
     if (!info[0].IsString()) {
@@ -473,15 +519,10 @@ Napi::Value MessageWrapper::SetResponse(const Napi::CallbackInfo& info) {
         Napi::TypeError::New(env, "Data String Expected").ThrowAsJavaScriptException();
     }
 
-    if (!info[2].IsNumber()) {
-        Napi::TypeError::New(env, "Phase Number Expected").ThrowAsJavaScriptException();
-    }
-
     std::string node_id = info[0].As<Napi::String>();                           // Get the message sender ID
     std::string data    = info[1].As<Napi::String>();                           // Get the message data
-    int phase           = info[2].As<Napi::Number>();                           // Get the message command phase
 
-    this->internal_message->set_response(node_id, data, phase);
+    this->internal_message->set_response(node_id, data);
 
     return Napi::Boolean::New(info.Env(), true);
 }
