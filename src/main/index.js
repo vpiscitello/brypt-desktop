@@ -115,7 +115,7 @@ ipcMain.on('startBryptConnection', function(event, message) {
 
         let initCommand = 0;
         let initPhase = 0;
-        let initData = '{uid: \"1\"}';
+        let initData = 'Request for Network Information.';
         let initKey = 'Grapefruit';
         let initNonce = 0;
 

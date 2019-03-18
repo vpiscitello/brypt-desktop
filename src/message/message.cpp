@@ -448,7 +448,7 @@ MessageWrapper::MessageWrapper(const Napi::CallbackInfo& info) : Napi::ObjectWra
             CommandType command = ( CommandType )( int ) info[2].As<Napi::Number>();    // Get the message command type
             int phase           = info[3].As<Napi::Number>();                           // Get the message command phase
             std::string data    = info[4].As<Napi::String>();                           // Get the message data
-            unsigned int nonce  = ( unsigned int ) info[4].As<Napi::Number>();          // Get the message key nonce
+            unsigned int nonce  = ( unsigned int ) info[5].As<Napi::Number>();          // Get the message key nonce
 
             this->internal_message = new Message( source_id, destination_id, command, phase, data, nonce );
             break;

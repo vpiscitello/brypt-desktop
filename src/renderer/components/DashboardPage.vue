@@ -108,7 +108,9 @@
             this.$electron.ipcRenderer.on('clusterInfoResponse', (event, message) => {
                 // TODO: Move to be handled in connection process
                 let clusterInfoResponse = new bryptMessage.Init(message.payload);
-                let clusterNodes = JSON.parse(clusterInfoResponse.getData());
+                let networkNodesJSON = JSON.parse(clusterInfoResponse.getData());
+                let rootClusterResponse = new bryptMessage.Init(networkNodesJSON['1']);
+                let clusterNodes = JSON.parse(rootClusterResponse.getData());
                 this.$store.dispatch('updateCluster', {
                     nodes: clusterNodes,
                 });
@@ -122,7 +124,10 @@
             this.$electron.ipcRenderer.on('bryptConnectionCompleted', (event, message) => {
                 // TODO: Move to be handled in connection process
                 let clusterInfoResponse = new bryptMessage.Init(message.payload.clusterInformation);
-                let clusterNodes = JSON.parse(clusterInfoResponse.getData());
+                let networkNodesJSON = JSON.parse(clusterInfoResponse.getData());
+                let rootClusterResponse = new bryptMessage.Init(networkNodesJSON['1']);
+                let clusterNodes = JSON.parse(rootClusterResponse.getData());
+                console.log(clusterNodes);
                 this.$store.dispatch('updateCluster', {
                     nodes: clusterNodes,
                 });

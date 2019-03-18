@@ -55,6 +55,7 @@ class BryptConnection {
 
     constructor() {
         this.socket = null;
+        this.coordinatorID = '';
         this.connIP = ''; // Peer connection IP address
         this.connPort = 0; // Peer connection port
         this.requests = []; // Holds queued requests to the peer
@@ -125,17 +126,93 @@ class BryptConnection {
             this.receive(message.toString()); // Forward the message to the connection collection manager
         });
 
-        this.socket.connect('tcp://' + this.connIP + ':' + this.connPort); // Connect to the peer using the known information over TCP
+        this.initialContact(this.selfID, function(coordinatorID, port) {
+            this.coordinatorID = coordinatorID;
+            this.connPort = port;
+            this.socket.connect('tcp://' + this.connIP + ':' + this.connPort); // Connect to the peer using the known information over TCP
+            // Socket monitor error handler
+            this.socket.on('monitor_error', function(err) {
+                setTimeout(function() {
+                    this.socket.monitor(1000, 0);
+                }, 5000);
+            });
 
-        // Socket monitor error handler
-        this.socket.on('monitor_error', function(err) {
+            console.log('Start monitoring...');
+            this.socket.monitor(1000, 0); // Start a socket monitor to check the socket every 1 second.
+        }.bind(this));
+
+    }
+
+    initialContact(selfID, callback) {
+        let initSock = new zeromq.socket('req');
+        var coordinatorID = '';
+        var newPort = 0;
+
+        console.log('Connecting via:', this.connIP, this.connPort);
+        initSock.connect('tcp://' + this.connIP + ':' + this.connPort); // Connect to the peer using the known information over TCP
+
+        initSock.on('monitor_error', function(err) {
             setTimeout(function() {
                 this.socket.monitor(1000, 0);
             }, 5000);
         });
 
-        console.log('Start monitoring...');
-        this.socket.monitor(1000, 0); // Start a socket monitor to check the socket every 1 second.
+        console.log('Start Init Socket monitor');
+        initSock.monitor(50, 0); // Start a socket monitor to check the socket every 1 second.
+
+        initSock.on("message", function(message) {
+            if (message.toString() == '\x06') {
+                console.log('== [Node] Sending SYN byte');
+                initSock.send('\x16');
+                return;
+            }
+            if (message.toString() == '\x04') {
+                console.log('== [Node] Connection sequence completed. Connecting to new endpoint.');
+                initSock.close();
+                callback(coordinatorID, newPort);
+                return;
+            }
+
+            let portResponse = new bryptMessage.Init(message.toString());
+            coordinatorID = portResponse.getSource();
+            newPort = parseInt(portResponse.getData());
+            console.log('== [Node] Port received:', newPort);
+
+            let sourceID = selfID; // Set the message sender ID
+            let destinationID = coordinatorID; // Set the message sender ID
+            let command = 4; // Set the message command type
+            let phase = 1; // Set the message command phase
+            let data = 'Node Information'; // Set the message data
+            let nonce = 0; // Set the message key nonce
+
+            let infoMessage = new bryptMessage.Init(sourceID, destinationID, command, phase, data, nonce);
+            console.log('== [Node] Sending node information');
+            initSock.send(infoMessage.getPack());
+
+        });
+
+        initSock.on('connect', function(fd, ep) {
+            console.log('== [Node] Sending coordinator acknowledgement');
+            initSock.send('\x06');
+        });
+
+        // Socket connect retry handler
+        this.socket.on('connect_retry', function(fd, ep) {
+            console.log('connect_retry, endpoint:', ep);
+            // TODO: Handle extended retries
+        });
+
+        // Socket disconnect handler - expected
+        this.socket.on('close', function(fd, ep) {
+            console.log('close, endpoint:', ep);
+            // TODO: Handle socket known disconnect
+        });
+
+        // Socket disconnect handler - unexpected
+        this.socket.on('disconnect', function(fd, ep) {
+            console.log('disconnect, endpoint:', ep);
+            // TODO: Handle socket unknown disconnect
+        });
 
     }
 
@@ -154,7 +231,7 @@ class BryptConnection {
         }
         // Create a new message using the provided information
         // TODO: Pass in provided key
-        let request = new bryptMessage.Init(this.selfID, command, phase, data, nonce);
+        let request = new bryptMessage.Init(this.selfID, this.coordinatorID, command, phase, data, nonce);
         // console.log(request.getPack());
         expectingResponse = true;
         this.socket.send(request.getPack()); // Send the packed message to the peer
