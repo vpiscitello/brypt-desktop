@@ -25,7 +25,7 @@ Message::Message(std::string raw, std::string key) {
     this->raw = raw;
 		this->key = key;
     this->unpack();
-		this->aes_ctr_128_decrypt(this->data, this->data.size());
+		this->aes_ctr_256_decrypt(this->data, this->data.size());
     this->response = NULL;
 }
 /* **************************************************************************
@@ -44,7 +44,7 @@ Message::Message(std::string node_id, CommandType command, int phase, std::strin
     this->nonce = nonce;
     this->set_timestamp();
 		this->key = key;
-		this->aes_ctr_128_encrypt(this->data, this->data.size());
+		this->aes_ctr_256_encrypt(this->data, this->data.size());
 }
 
 // Getter Functions
@@ -82,20 +82,6 @@ std::string Message::get_data() {
 ** *************************************************************************/
 unsigned int Message::get_dataLen() {
     return this->dataLen;
-}
-/* **************************************************************************
-** Function: get_key
-** Description: Return the key.
-** *************************************************************************/
-std::string Message::get_key() { // TODO: remove
-    return this->key;
-}
-/* **************************************************************************
-** Function: get_keyLen
-** Description: Return the key length.
-** *************************************************************************/
-unsigned int Message::get_keyLen() { // TODO: remove
-    return this->keyLen;
 }
 /* **************************************************************************
 ** Function: get_nonce
@@ -240,7 +226,7 @@ void Message::pack() {
 
     packed.append( 1, 4 );	// End of telemetry pack
 
-    this->auth_token = this->hmac_sha2( packed , packed.size() ); 
+    this->auth_token = this->hmac_blake2s( packed , packed.size() ); 
     this->raw = packed;
 }
 /* **************************************************************************
@@ -444,8 +430,6 @@ std::string Message::hmac_sha2(std::string mssgData, int mssgLen) {
 				md = EVP_get_digestbyname("sha256");
 				const unsigned char* mssg = (const unsigned char*)mssgData.c_str();
 				const unsigned char* k = (const unsigned char*)key.c_str();
-			//	unsigned int dataLen = get_dataLen();
-			//	unsigned int keyLen = get_keyLen();
 				unsigned int length = 0;
 				unsigned char* d;
 				d = HMAC(md, k, this->keyLen, mssg, mssgLen, NULL, &length);
@@ -462,8 +446,6 @@ std::string Message::hmac_blake2s(std::string mssgData, int mssgLen) {
 				md = EVP_get_digestbyname("blake2s256");
 				const unsigned char* mssg = (const unsigned char*)mssgData.c_str();
 				const unsigned char* k = (const unsigned char*)key.c_str();
-			//	unsigned int dataLen = this->internal_message->get_dataLen();
-			//	unsigned int keyLen = this->internal_message->get_keyLen();
 				unsigned int length = 0;
 				unsigned char* d;
 				d = HMAC(md, k, this->keyLen, mssg, mssgLen, NULL, &length);
@@ -690,33 +672,3 @@ Napi::Value MessageWrapper::GetResponse(const Napi::CallbackInfo& info) {
     std::string pack = this->internal_message->get_response();
     return Napi::String::New(info.Env(), pack);
 }
-
-
-/*std::string Message::hmac_sha2() {
-				const EVP_MD *md;
-				md = EVP_get_digestbyname("sha256");
-				const unsigned char* data = (const unsigned char*)(this->internal_message->get_data()).c_str();
-				const unsigned char* key = (const unsigned char*)(this->internal_message->get_key()).c_str();
-				unsigned int dataLen = this->internal_message->get_dataLen();
-				unsigned int keyLen = this->internal_message->get_keyLen();
-				unsigned int length = 0;
-				unsigned char* digest;
-				digest = HMAC(md, key, keyLen, data, dataLen, NULL, &length);
-    		std::string cppDigest = (char*)digest;
-		return cppDigest;
-}
-
-std::string Message::hmac_blake2s() {
-				const EVP_MD *md;
-				md = EVP_get_digestbyname("blake2s256");
-				const unsigned char* data = (const unsigned char*)(this->internal_message->get_data()).c_str();
-				const unsigned char* key = (const unsigned char*)(this->internal_message->get_key()).c_str();
-				unsigned int dataLen = this->internal_message->get_dataLen();
-				unsigned int keyLen = this->internal_message->get_keyLen();
-				unsigned int length = 0;
-				unsigned char* digest;
-				digest = HMAC(md, key, keyLen, data, dataLen, NULL, &length);
-    		std::string cppDigest = (char*)digest;
-		return cppDigest;
-}
-*/

@@ -67,8 +67,6 @@ class Message {
         unsigned int get_phase();
         std::string get_data();
         unsigned int get_dataLen();
-        std::string get_key();
-        unsigned int get_keyLen();
         unsigned int get_nonce();
         std::string get_timestamp();
         std::string get_pack();
