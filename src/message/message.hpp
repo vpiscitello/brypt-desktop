@@ -37,12 +37,11 @@ class Message {
         unsigned int phase;                      // Phase of the Command state
 
         std::string data;               // Encrypted data to be sent
-				unsigned int dataLen;						// Length of data/ctxt
+				unsigned int dataLen;						// Data length
 
         std::string timestamp;          // Current timestamp
 				
 				std::string key;								// Key used for crypto 
-				unsigned int keyLen;						// Key length
 				std::string digest;					// Message digest (HMAC of ctxt/data) 
         class Message * response;             // A circular message for the response to the current message
 
