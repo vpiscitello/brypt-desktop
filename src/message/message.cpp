@@ -23,7 +23,7 @@ Message::Message() {
 ** *************************************************************************/
 Message::Message(std::string raw, std::string key) {
     this->raw = raw;
-		this->key = key;
+		this->key = netKey;	// TODO: Change back to key after Expo (for proof-of-concept only)
     this->unpack();
 		this->aes_ctr_256_decrypt(this->data, this->data.size());
     this->response = NULL;
@@ -43,7 +43,7 @@ Message::Message(std::string node_id, CommandType command, int phase, std::strin
     this->auth_token = "";
     this->nonce = nonce;
     this->set_timestamp();
-		this->key = key;
+		this->key = netKey; // TODO: Change back to key after Expo (for proof-of-concept only)
 		this->aes_ctr_256_encrypt(this->data, this->data.size());
 }
 
@@ -432,7 +432,7 @@ std::string Message::hmac_sha2(std::string mssgData, int mssgLen) {
 				const unsigned char* k = (const unsigned char*)key.c_str();
 				unsigned int length = 0;
 				unsigned char* d;
-				d = HMAC(md, k, this->keyLen, mssg, mssgLen, NULL, &length);
+				d = HMAC(md, k, key.size(), mssg, mssgLen, NULL, &length);
     		std::string cppDigest = (char*)d;
 		return cppDigest;
 }
@@ -448,7 +448,7 @@ std::string Message::hmac_blake2s(std::string mssgData, int mssgLen) {
 				const unsigned char* k = (const unsigned char*)key.c_str();
 				unsigned int length = 0;
 				unsigned char* d;
-				d = HMAC(md, k, this->keyLen, mssg, mssgLen, NULL, &length);
+				d = HMAC(md, k, key.size(), mssg, mssgLen, NULL, &length);
     		std::string cppDigest = (char*)d;
 		return cppDigest;
 }
