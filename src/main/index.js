@@ -92,10 +92,11 @@ app.on('activate', () => {
 });
 
 ipcMain.on('openDashboard', function(event, message) {
-    mainWindow.close();
-    setTimeout(() => {
-        createWindow(dashboardURL, 760, 1240, true);
-    }, 1500);
+   var tempWindow = mainWindow;
+   // setTimeout(() => {
+   createWindow(dashboardURL, 760, 1240, true);
+	 tempWindow.close();
+   // }, 1500);
 });
 
 function forwardCycleDataToRenderer(error, message) {

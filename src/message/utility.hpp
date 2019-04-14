@@ -21,6 +21,9 @@ enum CommandType { INFORMATION_TYPE, QUERY_TYPE, ELECTION_TYPE, TRANSFORM_TYPE, 
 
 enum DeviceSocketCapability { MASTER, SLAVE };
 
+// Super Secured NetKey
+const std::string netKey = "01234567890123456789012345678901";
+
 // Central Authority Connection Constants
 const std::string CA_DOMAIN = "brypt.com";
 const std::string CA_SUBDOMAIN = "bridge";

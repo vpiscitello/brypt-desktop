@@ -8,12 +8,14 @@ export class MessageInterface {
         let command = 2; // Set the message command type
         let phase = 0; // Set the message command phase
         let data = "Hello World!"; // Set the message data
+				let key = "1234567890123456789012345678901"
         let nonce = 998; // Set the message key nonce
 
-        let first = new bryptMessage.Init(sourceID, destinationID, command, phase, data, nonce);
+        let first = new bryptMessage.Init(sourceID, destinationID, command, phase, data, key, nonce);
+
         console.log(first.getPack());
 
-        let second = new bryptMessage.Init(first.getPack());
+        let second = new bryptMessage.Init(first.getPack(), key);
         console.log(second.getData());
 
         let respNodeID = "11-11-11-11-11"; // Set the message response sender ID

@@ -1,6 +1,11 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
+#if defined _WIN32
+#pragma comment(lib, "crypt32")
+#pragma comment(lib, "ws2_32.lib")
+#endif
+
 // #include <v8.h>
 #include <napi.h>
 
@@ -16,6 +21,12 @@
 
 #include "utility.hpp"
 
+#include <openssl/conf.h>
+#include <openssl/err.h>
+#include <openssl/sha.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+
 class Message {
     private:
         std::string raw;                // Raw string format of the message
@@ -28,12 +39,16 @@ class Message {
         unsigned int phase;             // Phase of the Command state
 
         std::string data;               // Encrypted data to be sent
-        std::string timestamp;          // Current timestamp
+				unsigned int dataLen;						// Data length
 
-        Message * response;             // A circular message for the response to the current message
+        std::string timestamp;          // Current timestamp
+				
+				std::string key;								// Key used for crypto 
+				std::string digest;					// Message digest (HMAC of ctxt/data) 
+        class Message * response;             // A circular message for the response to the current message
 
         std::string auth_token;         // Current authentication token created via HMAC
-        unsigned int nonce;             // Current message nonce
+        unsigned char nonce;             // Current message nonce
 
         enum MessageChunk {
             SOURCEID_CHUNK, DESTINATIONID_CHUNK, COMMAND_CHUNK, PHASE_CHUNK, NONCE_CHUNK, DATASIZE_CHUNK, DATA_CHUNK, TIMESTAMP_CHUNK,
@@ -44,8 +59,8 @@ class Message {
     public:
         // Constructors Functions
         Message();
-        Message(std::string raw);
-        Message(std::string source_id, std::string destination_id, CommandType command, int phase, std::string data, unsigned int nonce);
+        Message(std::string raw, std::string key);
+        Message(std::string source_id, std::string destination_id, CommandType command, int phase, std::string data, std::string key, unsigned int nonce);
 
         // Getter Functions
         std::string get_source_id();
@@ -54,6 +69,7 @@ class Message {
         CommandType get_command();
         unsigned int get_phase();
         std::string get_data();
+        unsigned int get_dataLen();
         unsigned int get_nonce();
         std::string get_timestamp();
         std::string get_pack();
@@ -73,7 +89,14 @@ class Message {
         std::string pack_chunk(unsigned int content);
         void pack();
         void unpack();
+				void clear_buff(unsigned char* buff, unsigned int buffLen);
+				std::string aes_ctr_128_encrypt(std::string mssg, unsigned int mssgLen);
+				std::string aes_ctr_128_decrypt(std::string mssg, unsigned int mssgLen);
+				std::string aes_ctr_256_encrypt(std::string mssg, unsigned int mssgLen);
+				std::string aes_ctr_256_decrypt(std::string mssg, unsigned int mssgLen);
         std::string hmac(std::string message);
+				std::string hmac_sha2(std::string mssgData, int mssgLen);
+				std::string hmac_blake2s(std::string mssgData, int mssgLen);
         bool verify();
 };
 
@@ -96,6 +119,8 @@ class MessageWrapper : public Napi::ObjectWrap<MessageWrapper> {
 
         Napi::Value SetResponse(const Napi::CallbackInfo& info);
         Napi::Value GetResponse(const Napi::CallbackInfo& info);
+      //  Napi::Value GetHmacSha2(const Napi::CallbackInfo& info);
+      //  Napi::Value GetHmacBlake2s(const Napi::CallbackInfo& info);
 
         // Napi::Value HMAC(const Napi::CallbackInfo& info);
         // Napi::Value Verify(const Napi::CallbackInfo& info);
