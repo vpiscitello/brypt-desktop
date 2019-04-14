@@ -209,7 +209,7 @@
                                     this.info.nodes = dataJSON['nodes'];
 
                                     // TODO: Update to get this data from the network
-                                    this.info.network.clusters = 2;
+                                    this.info.network.clusters = 1;
                                     this.info.network.attacks = 0.0;
 
                                     this.info.nodes.forEach(function(node){
