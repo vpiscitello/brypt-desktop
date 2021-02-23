@@ -1,0 +1,14 @@
+*.so
+*.exe
+*.test
+*.pem
+*.bin
+node_modules
+dist
+dist_electron
+temp
+
+src/temp/*
+src/external/*
+src/build/*
+src/bin/*

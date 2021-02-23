@@ -1,0 +1,78 @@
+{
+  "name": "brypt-desktop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Desktop interface for the Brypt network.",
+  "author": "vpiscitello <v.piscitello@piscitellodesigns.com>",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "test:unit": "vue-cli-service test:unit",
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps",
+    "rebuild": "relectron-rebuild -f -w brypt-crypto"
+  },
+  "main": "src/background/main.ts",
+  "dependencies": {
+    "bindings": "^1.5.0",
+    "core-js": "^3.6.5",
+    "nan": "^2.14.2",
+    "node-addon-api": "^3.1.0",
+    "vue": "^3.0.0",
+    "vue-router": "^4.0.0-0",
+    "vuex": "^4.0.0-0",
+    "vuex-electron": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.11",
+    "@types/electron-devtools-installer": "^2.2.0",
+    "@types/mocha": "^5.2.4",
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-router": "~4.5.0",
+    "@vue/cli-plugin-typescript": "~4.5.0",
+    "@vue/cli-plugin-unit-mocha": "~4.5.0",
+    "@vue/cli-plugin-vuex": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "@vue/compiler-sfc": "^3.0.0",
+    "@vue/test-utils": "^2.0.0-0",
+    "chai": "^4.1.2",
+    "electron": "^11.0.0",
+    "electron-builder": "^22.9.1",
+    "electron-devtools-installer": "^3.1.0",
+    "typescript": "~3.9.3",
+    "vue-cli-plugin-electron-builder": "~2.0.0-rc.6"
+  },
+  "build": {
+    "productName": "brypt-desktop",
+    "appId": "com.brypt.desktop",
+    "directories": {
+      "output": "build"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 410,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 150,
+          "type": "file"
+        }
+      ]
+    },
+    "mac": {
+      "icon": "resources/icons/mac/icon.icns"
+    },
+    "win": {
+      "icon": "resources/icons/win/icon.ico"
+    },
+    "linux": {
+      "icon": "resources/icons"
+    }
+  }
+}
