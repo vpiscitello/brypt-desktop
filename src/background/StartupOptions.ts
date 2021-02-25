@@ -2,24 +2,23 @@
 'use strict'
 //------------------------------------------------------------------------------------------------
 import path from 'path';
-import fs, { unwatchFile } from 'fs';
-import { readonly } from 'vue';
+import fs from 'fs';
 //------------------------------------------------------------------------------------------------
 
 const Constants =
 {
-    Version: "0.0.0",
-    VersionParts: [ 0, 0, 0 ],
-    InitializationStateFilename: "config.json",
-    WindowStateFilename: "window.json",
-    EncodingType: 'utf-8'
+    Version: '0.0.0' as string,
+    VersionParts: [ 0, 0, 0 ] as Array<number>,
+    InitializationStateFilename: 'config.json' as string,
+    WindowStateFilename: 'window.json' as string,
+    EncodingType: 'utf-8' 
 } as const;
 
 //------------------------------------------------------------------------------------------------
 
 export default class StartupOptions
 {
-    constructor(applicationFilepath: string)
+    public constructor(applicationFilepath: string)
     {
         this.filepath = path.join(applicationFilepath, Constants.InitializationStateFilename);
         this.window = new WindowOptions(applicationFilepath);

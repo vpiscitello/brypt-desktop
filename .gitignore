@@ -7,6 +7,7 @@ node_modules
 dist
 dist_electron
 temp
+package-lock.json
 
 src/temp/*
 src/external/*

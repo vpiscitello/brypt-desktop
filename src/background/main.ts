@@ -2,22 +2,29 @@
 'use strict'
 //------------------------------------------------------------------------------------------------
 import StartupOptions from './StartupOptions';
+import SystemTray from './SystemTray';
+import MainWindow from './MainWindow';
 //------------------------------------------------------------------------------------------------
-import { app, dialog, protocol, BrowserWindow } from 'electron';
-import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
+import { app, dialog, protocol, BrowserWindow, Main } from 'electron';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 //------------------------------------------------------------------------------------------------
 const isDevelopment = process.env.NODE_ENV !== 'production';
 //------------------------------------------------------------------------------------------------
 
-let options: StartupOptions;
+const ApplicationElements = {
+    Options: null as StartupOptions | null,
+    SystemTray: null as SystemTray | null,
+    MainWindow: null as MainWindow | null,
+};
 
 //------------------------------------------------------------------------------------------------
 
 function FetchStartupOptions()
 {
-    options = new StartupOptions(app.getAppPath());
-    if (!options.Parse()) {
+    if (ApplicationElements.Options) { return; }
+
+    ApplicationElements.Options = new StartupOptions(app.getAppPath());
+    if (!ApplicationElements.Options.Parse()) {
         dialog.showMessageBox({
             type: 'warning',
             title: 'Unable to Parse Configuration File',
@@ -29,35 +36,6 @@ function FetchStartupOptions()
 }
 
 //------------------------------------------------------------------------------------------------
-
-async function CreateMainWindow()
-{
-    const [width, height] = options.GetWindowDimensions();
-    const [x, y] = options.GetWindowPosition();
-    
-    const window = new BrowserWindow({
-        x, y, width, height,
-        webPreferences: {
-            nodeIntegration: (process.env.ELECTRON_NODE_INTEGRATION as unknown) as boolean
-        }
-    });
-    
-    window.on("close", () => {
-        const {x, y, width, height} = window.getBounds();
-        options.Update({ x, y, width, height });
-        options.Serialize();
-    });
-
-    // If the application is in development mode, load application content through the development
-    // server. Otherwise, load the index file directly. 
-    if (process.env.WEBPACK_DEV_SERVER_URL) {
-        await window.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
-        if (!process.env.IS_TEST) { window.webContents.openDevTools(); }
-    } else {
-        createProtocol('app');
-        window.loadURL('app://./index.html');
-    }
-}
 
 //------------------------------------------------------------------------------------------------
 // Register the 'app' scheme with electron. This must occue before the application is ready. 
@@ -82,7 +60,11 @@ app.on('ready', async () => {
     }
 
     FetchStartupOptions();
-    CreateMainWindow();
+    if(!ApplicationElements.Options) { app.quit(); return; }
+
+    ApplicationElements.SystemTray = new SystemTray();
+    ApplicationElements.MainWindow = new MainWindow(ApplicationElements.Options);
+    ApplicationElements.MainWindow.Initialize();
 });
 
 //------------------------------------------------------------------------------------------------
@@ -91,8 +73,11 @@ app.on('ready', async () => {
 //------------------------------------------------------------------------------------------------
 app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-        if (!options) { FetchStartupOptions(); }
-        CreateMainWindow();
+        if (!ApplicationElements.Options) { FetchStartupOptions(); }
+        if (!ApplicationElements.MainWindow && ApplicationElements.Options) {
+            ApplicationElements.MainWindow = new MainWindow(ApplicationElements.Options);
+            ApplicationElements.MainWindow.Initialize();
+        }
     }
 });
 
@@ -101,11 +86,7 @@ app.on('activate', () => {
 // open even if all windows have been closed. This will quit the application on all other 
 // operating systems. 
 //------------------------------------------------------------------------------------------------
-app.on('window-all-closed', () => {
-    // On macOS it is common for applications and their menu bar
-    // to stay active until the user quits explicitly with Cmd + Q
-    if (process.platform !== 'darwin') { app.quit(); }
-});
+app.on('window-all-closed', () => {});
 
 //------------------------------------------------------------------------------------------------
 

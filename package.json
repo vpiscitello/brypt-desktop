@@ -43,36 +43,5 @@
     "electron-devtools-installer": "^3.1.0",
     "typescript": "~3.9.3",
     "vue-cli-plugin-electron-builder": "~2.0.0-rc.6"
-  },
-  "build": {
-    "productName": "brypt-desktop",
-    "appId": "com.brypt.desktop",
-    "directories": {
-      "output": "build"
-    },
-    "dmg": {
-      "contents": [
-        {
-          "x": 410,
-          "y": 150,
-          "type": "link",
-          "path": "/Applications"
-        },
-        {
-          "x": 130,
-          "y": 150,
-          "type": "file"
-        }
-      ]
-    },
-    "mac": {
-      "icon": "resources/icons/mac/icon.icns"
-    },
-    "win": {
-      "icon": "resources/icons/win/icon.ico"
-    },
-    "linux": {
-      "icon": "resources/icons"
-    }
   }
 }
